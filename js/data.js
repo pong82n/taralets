@@ -3,6 +3,74 @@
  * Work-commute carpooling platform where Drivers book matching co-commuters
  */
 
+export const PAYMENT_MODES = [
+  {
+    id: "gcash",
+    name: "GCash",
+    shortName: "GCash",
+    type: "e-wallet",
+    icon: "💙",
+    color: "#007dfe",
+    bgClass: "bg-blue-600 text-white",
+    badgeClass: "bg-blue-100 text-blue-800 border-blue-200",
+    description: "Scan Driver GCash QR or transfer to mobile number",
+    isDigital: true,
+    speed: "Instant Transfer"
+  },
+  {
+    id: "maya",
+    name: "Maya",
+    shortName: "Maya",
+    type: "e-wallet",
+    icon: "💚",
+    color: "#00d665",
+    bgClass: "bg-emerald-600 text-white",
+    badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    description: "Send to Maya @username or scan merchant/personal QR",
+    isDigital: true,
+    speed: "Instant Transfer"
+  },
+  {
+    id: "cash",
+    name: "Cash on Boarding (Kaliwaan)",
+    shortName: "Cash",
+    type: "cash",
+    icon: "💵",
+    color: "#d97706",
+    bgClass: "bg-amber-600 text-white",
+    badgeClass: "bg-amber-100 text-amber-800 border-amber-200",
+    description: "Hand exact change upon pickup or drop-off at the office",
+    isDigital: false,
+    speed: "In-Person Handover"
+  },
+  {
+    id: "qrph",
+    name: "QR Ph / Bank Transfer",
+    shortName: "QR Ph",
+    type: "bank",
+    icon: "🏦",
+    color: "#4f46e5",
+    bgClass: "bg-indigo-600 text-white",
+    badgeClass: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    description: "National QR Ph (BDO, BPI, UnionBank, GoTyme, Seabank)",
+    isDigital: true,
+    speed: "InstaPay (Real-time)"
+  },
+  {
+    id: "wallet",
+    name: "TaraLets Commute Wallet",
+    shortName: "TL Wallet",
+    type: "in-app",
+    icon: "⚡",
+    color: "#0d9488",
+    bgClass: "bg-teal-600 text-white",
+    badgeClass: "bg-teal-100 text-teal-800 border-teal-200",
+    description: "Auto-deducted contactless fare with gas cashbacks",
+    isDigital: true,
+    speed: "1-Click Auto Settlement"
+  }
+];
+
 export const WORKPLACE_HUBS = [
   {
     id: "hub-bgc",
@@ -72,7 +140,18 @@ export const INITIAL_DRIVERS = [
     workSchedule: "08:00 AM - 05:00 PM",
     rating: 4.95,
     totalCommutes: 142,
+    walletBalance: 2450.00,
     badge: "Verified Employee",
+    paymentMethods: {
+      acceptedModes: ["gcash", "maya", "cash", "qrph", "wallet"],
+      gcashNumber: "0917-555-8821",
+      gcashName: "MARCO R.",
+      mayaAccount: "@engr_marcoreyes",
+      bankName: "BDO Unibank (InstaPay)",
+      bankAccount: "0041-8829-1049",
+      acceptsCash: true,
+      preferDigital: true
+    },
     vehicle: {
       type: "car",
       model: "Toyota Vios 1.5G (Silver)",
@@ -100,7 +179,18 @@ export const INITIAL_DRIVERS = [
     workSchedule: "08:30 AM - 05:30 PM",
     rating: 4.98,
     totalCommutes: 98,
+    walletBalance: 1280.00,
     badge: "Verified Senior Auditor",
+    paymentMethods: {
+      acceptedModes: ["gcash", "maya", "qrph", "wallet"],
+      gcashNumber: "0920-888-3312",
+      gcashName: "BEA S.",
+      mayaAccount: "@bea_santos_cpa",
+      bankName: "BPI (Bank of the Philippine Islands)",
+      bankAccount: "4129-8812-33",
+      acceptsCash: false, // Cashless only for quick motorcycle drops
+      preferDigital: true
+    },
     vehicle: {
       type: "motorcycle",
       model: "Honda Click 150i (Matte Blue)",
@@ -128,7 +218,17 @@ export const INITIAL_DRIVERS = [
     workSchedule: "09:00 AM - 06:00 PM",
     rating: 4.88,
     totalCommutes: 210,
+    walletBalance: 3120.00,
     badge: "Verified SGV Team Lead",
+    paymentMethods: {
+      acceptedModes: ["gcash", "cash", "qrph", "wallet"],
+      gcashNumber: "0918-223-4455",
+      gcashName: "DAVID T.",
+      bankName: "UnionBank PH",
+      bankAccount: "1098-4421-9988",
+      acceptsCash: true,
+      preferDigital: false
+    },
     vehicle: {
       type: "car",
       model: "Mitsubishi Xpander Cross (White)",
@@ -156,7 +256,16 @@ export const INITIAL_DRIVERS = [
     workSchedule: "08:00 AM - 05:00 PM",
     rating: 4.92,
     totalCommutes: 76,
+    walletBalance: 950.00,
     badge: "Verified Systems Analyst",
+    paymentMethods: {
+      acceptedModes: ["gcash", "maya", "cash", "wallet"],
+      gcashNumber: "0939-991-6677",
+      gcashName: "SARAH D.",
+      mayaAccount: "@sarah_dizon_tech",
+      acceptsCash: true,
+      preferDigital: true
+    },
     vehicle: {
       type: "motorcycle",
       model: "Yamaha NMAX 155 (Dark Petrol)",
@@ -189,7 +298,9 @@ export const INITIAL_PASSENGERS = [
     pickupLat: 14.6865,
     pickupLng: 121.0801,
     vehiclePreference: "any",
-    status: "looking", // 'looking', 'booked', 'pending_approval'
+    status: "looking",
+    walletBalance: 650.00,
+    preferredPaymentMode: "gcash",
     willingToShareFare: true,
     bio: "Looking for daily morning carpool to BGC. Quiet and punctual co-passenger!"
   },
@@ -207,6 +318,8 @@ export const INITIAL_PASSENGERS = [
     pickupLng: 121.0483,
     vehiclePreference: "motorcycle",
     status: "looking",
+    walletBalance: 420.00,
+    preferredPaymentMode: "maya",
     willingToShareFare: true,
     bio: "Heading to Ayala Ave daily. Okay with motorcycle commute to beat EDSA rush hour."
   },
@@ -224,6 +337,8 @@ export const INITIAL_PASSENGERS = [
     pickupLng: 120.9492,
     vehiclePreference: "car",
     status: "looking",
+    walletBalance: 1100.00,
+    preferredPaymentMode: "cash",
     willingToShareFare: true,
     bio: "Commuting from Cavite to Makati CBD. Willing to chip in for gas and CAVITEX toll."
   },
@@ -241,6 +356,8 @@ export const INITIAL_PASSENGERS = [
     pickupLng: 121.0988,
     vehiclePreference: "any",
     status: "looking",
+    walletBalance: 780.00,
+    preferredPaymentMode: "wallet",
     willingToShareFare: true,
     bio: "Same shift hours at Eastwood! Hate crowded jeepneys and UV express queues."
   },
@@ -258,6 +375,8 @@ export const INITIAL_PASSENGERS = [
     pickupLng: 121.0776,
     vehiclePreference: "car",
     status: "looking",
+    walletBalance: 940.00,
+    preferredPaymentMode: "gcash",
     willingToShareFare: true,
     bio: "Colleague at Net Park! Working on 5th floor. Looking to carpool mornings via C5."
   },
@@ -275,6 +394,8 @@ export const INITIAL_PASSENGERS = [
     pickupLng: 121.1192,
     vehiclePreference: "any",
     status: "looking",
+    walletBalance: 530.00,
+    preferredPaymentMode: "qrph",
     willingToShareFare: true,
     bio: "Workplace is near Megamall / Ortigas. Very respectful passenger, ready 10 mins early."
   }
@@ -302,8 +423,9 @@ export const INITIAL_COMMUTE_TRIPS = [
     totalSeats: 3,
     bookedSeats: 1,
     farePerSeat: 150,
+    acceptedPaymentModes: ["gcash", "maya", "cash", "qrph", "wallet"],
     routeVia: "Commonwealth Ave > C5 Road > Kalayaan Flyover > BGC",
-    status: "active", // active, completed, cancelled
+    status: "active",
     bookedPassengerIds: ["pax-05"],
     notes: "Leaving strictly at 6:45 AM. Trunk space is open for laptop bags and backpacks."
   },
@@ -328,10 +450,11 @@ export const INITIAL_COMMUTE_TRIPS = [
     totalSeats: 1,
     bookedSeats: 0,
     farePerSeat: 90,
+    acceptedPaymentModes: ["gcash", "maya", "qrph", "wallet"],
     routeVia: "Boni > Coronado St > Makati-Mandaluyong Bridge > Makati Ave",
     status: "active",
     bookedPassengerIds: [],
-    notes: "I bring a sanitized ICC helmet and rain gear. Safe, relaxed riding pace."
+    notes: "I bring a sanitized ICC helmet and rain gear. Cashless payments preferred!"
   },
   {
     id: "trip-03",
@@ -354,6 +477,7 @@ export const INITIAL_COMMUTE_TRIPS = [
     totalSeats: 4,
     bookedSeats: 1,
     farePerSeat: 180,
+    acceptedPaymentModes: ["gcash", "cash", "qrph", "wallet"],
     routeVia: "CAVITEX > NAIAx Expressway > Skyway Stage 3 > Magallanes > Ayala",
     status: "active",
     bookedPassengerIds: ["pax-03"],
@@ -379,9 +503,16 @@ export const INITIAL_BOOKINGS = [
     destinationPoint: "Net Park, BGC, Taguig",
     scheduledTime: "06:45 AM",
     fare: 150,
-    status: "confirmed", // 'driver_booked', 'confirmed', 'in_transit', 'completed', 'cancelled'
-    initiatedBy: "driver", // DRIVER BOOKED PASSENGER!
+    status: "confirmed",
+    initiatedBy: "driver",
     driverNote: "Booked seat 1 for Miguel since we both work at Net Park BGC!",
+    payment: {
+      modeId: "gcash",
+      modeName: "GCash",
+      status: "paid", // 'pending', 'paid', 'verified'
+      referenceNo: "GC-884910283",
+      paidAt: "2026-11-04T01:30:00Z"
+    },
     createdAt: "2026-11-04T01:15:00Z"
   },
   {
@@ -404,6 +535,13 @@ export const INITIAL_BOOKINGS = [
     status: "confirmed",
     initiatedBy: "driver",
     driverNote: "Reserved seat for fellow Makati CBD commuter along Bacoor route.",
+    payment: {
+      modeId: "cash",
+      modeName: "Cash on Boarding",
+      status: "pending",
+      referenceNo: "CASH-UPON-PICKUP",
+      paidAt: null
+    },
     createdAt: "2026-11-04T01:25:00Z"
   }
 ];

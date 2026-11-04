@@ -8,7 +8,8 @@ import {
   INITIAL_DRIVERS,
   INITIAL_PASSENGERS,
   INITIAL_COMMUTE_TRIPS,
-  INITIAL_BOOKINGS
+  INITIAL_BOOKINGS,
+  PAYMENT_MODES
 } from './data.js';
 
 const STORAGE_KEYS = {
@@ -16,10 +17,11 @@ const STORAGE_KEYS = {
   PASSENGERS: 'taralets_passengers',
   TRIPS: 'taralets_trips',
   BOOKINGS: 'taralets_bookings',
-  ACTIVE_USER_ROLE: 'taralets_active_role', // 'driver' or 'passenger'
+  ACTIVE_USER_ROLE: 'taralets_active_role',
   CURRENT_DRIVER_ID: 'taralets_current_driver_id',
   CURRENT_PASSENGER_ID: 'taralets_current_passenger_id',
-  MESSAGES: 'taralets_messages'
+  MESSAGES: 'taralets_messages',
+  TRANSACTIONS: 'taralets_transactions'
 };
 
 class StorageService {
@@ -46,15 +48,39 @@ class StorageService {
         bookingId: "bk-101",
         sender: "driver",
         senderName: "Engr. Marco Reyes",
-        text: "Hi Miguel! I've booked you into my Fairview-to-NetPark trip. Will pick you up along Katipunan around 7:05 AM.",
+        text: "Hi Miguel! I've booked you into my Fairview-to-NetPark trip. Paid via GCash (Ref #GC-884910283). Will pick you up along Katipunan around 7:05 AM.",
         time: "06:15 AM"
       },
       {
         bookingId: "bk-101",
         sender: "passenger",
         senderName: "Miguel Santos",
-        text: "Thanks Marco! Perfect, I'll be waiting in front of Ateneo Gate 3. See you!",
+        text: "Thanks Marco! Payment verified. I'll be waiting in front of Ateneo Gate 3. See you!",
         time: "06:17 AM"
+      }
+    ]));
+    localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify([
+      {
+        id: "tx-1",
+        userId: "pax-05",
+        userType: "passenger",
+        type: "fare_payment",
+        amount: -150,
+        modeId: "gcash",
+        description: "Commute Fare to BGC (Engr. Marco Reyes)",
+        date: "Today, 06:15 AM",
+        status: "completed"
+      },
+      {
+        id: "tx-2",
+        userId: "drv-01",
+        userType: "driver",
+        type: "fare_earnings",
+        amount: 150,
+        modeId: "gcash",
+        description: "Seat 1 Share: Miguel Santos (Net Park)",
+        date: "Today, 06:15 AM",
+        status: "completed"
       }
     ]));
   }
@@ -65,6 +91,15 @@ class StorageService {
 
   getHubById(id) {
     return WORKPLACE_HUBS.find(h => h.id === id) || WORKPLACE_HUBS[0];
+  }
+
+  // --- Payment Modes ---
+  getPaymentModes() {
+    return PAYMENT_MODES;
+  }
+
+  getPaymentModeById(modeId) {
+    return PAYMENT_MODES.find(m => m.id === modeId) || PAYMENT_MODES[0];
   }
 
   // --- Roles & Identity ---
@@ -187,21 +222,38 @@ class StorageService {
   }
 
   /**
-   * CORE REQUIREMENT: Driver initiates a booking for a passenger!
+   * Driver initiates booking for passenger with specific payment mode
    */
-  createDriverBooking({ tripId, passengerId, driverNote, customFare }) {
+  createDriverBooking({ tripId, passengerId, driverNote, customFare, paymentModeId = 'gcash' }) {
     const trips = this.getTrips();
     const trip = trips.find(t => t.id === tripId);
     if (!trip) throw new Error("Trip not found");
 
     if (trip.bookedSeats >= trip.totalSeats) {
-      throw new Error(`This ${trip.vehicleType} has no seats remaining! Capacity: ${trip.totalSeats}`);
+      throw new Error(`This ${trip.vehicleType} has reached full capacity! (${trip.totalSeats}/${trip.totalSeats})`);
     }
 
     const passenger = this.getPassengers().find(p => p.id === passengerId);
     if (!passenger) throw new Error("Passenger not found");
 
     const driver = this.getDrivers().find(d => d.id === trip.driverId) || this.getCurrentDriver();
+    const fareAmount = customFare !== undefined ? Number(customFare) : trip.farePerSeat;
+    const mode = this.getPaymentModeById(paymentModeId);
+
+    // If passenger is paying via in-app TaraLets Commute Wallet
+    let isWalletPaid = false;
+    if (paymentModeId === 'wallet') {
+      if ((passenger.walletBalance || 0) < fareAmount) {
+        throw new Error(`Insufficient wallet balance! Commuter balance is ₱${(passenger.walletBalance || 0).toFixed(2)}, required ₱${fareAmount}. Please choose GCash or Cash.`);
+      }
+      // Deduct from passenger
+      passenger.walletBalance -= fareAmount;
+      this.savePassenger(passenger);
+      // Credit to driver
+      driver.walletBalance = (driver.walletBalance || 0) + fareAmount;
+      this.saveDriver(driver);
+      isWalletPaid = true;
+    }
 
     const bookingId = "bk-" + Date.now();
     const newBooking = {
@@ -220,10 +272,18 @@ class StorageService {
       pickupPoint: passenger.pickupLocation,
       destinationPoint: trip.destinationName,
       scheduledTime: trip.departureTime,
-      fare: customFare !== undefined ? Number(customFare) : trip.farePerSeat,
-      status: "confirmed", // Driver created the booking directly
+      fare: fareAmount,
+      status: "confirmed",
       initiatedBy: "driver",
       driverNote: driverNote || `Driver ${driver.name} created this booking for your shared route to ${trip.destinationName}.`,
+      payment: {
+        modeId: mode.id,
+        modeName: mode.name,
+        amount: fareAmount,
+        status: isWalletPaid ? "paid" : (mode.id === 'cash' ? "pending_cash" : "pending_digital"),
+        referenceNo: isWalletPaid ? `WALLET-${Date.now().toString().slice(-6)}` : (mode.id === 'cash' ? "CASH-ON-BOARDING" : `GC-${Math.floor(100000000 + Math.random() * 900000000)}`),
+        paidAt: isWalletPaid ? new Date().toISOString() : null
+      },
       createdAt: new Date().toISOString()
     };
 
@@ -244,12 +304,22 @@ class StorageService {
     passenger.status = 'booked';
     this.savePassenger(passenger);
 
-    // Generate initial welcome coordination message
+    // Log transaction
+    this.addTransaction({
+      userId: passenger.id,
+      userType: "passenger",
+      type: "fare_booking",
+      amount: -fareAmount,
+      modeId: mode.id,
+      description: `Carpool share to ${trip.destinationName} (${driver.name})`
+    });
+
+    // Generate initial coordination message
     this.addMessage({
       bookingId: newBooking.id,
       sender: "driver",
       senderName: driver.name,
-      text: `Hello ${passenger.name}! I booked a seat for you in my ${trip.vehicleType} (${trip.vehicleModel}) for our commute to work. Route: ${trip.routeVia || trip.destinationName}. Departure: ${trip.departureTime}.`,
+      text: `Hello ${passenger.name}! I booked your seat in my ${trip.vehicleType} (${trip.vehicleModel}). Fare: ₱${fareAmount} via ${mode.name}. Route: ${trip.routeVia || trip.destinationName}. Departure: ${trip.departureTime}.`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
 
@@ -264,9 +334,15 @@ class StorageService {
 
     booking.status = status;
     booking.updatedAt = new Date().toISOString();
+
+    // If ride completed and cash payment, mark payment as paid
+    if (status === 'completed' && booking.payment && booking.payment.modeId === 'cash') {
+      booking.payment.status = 'paid';
+      booking.payment.paidAt = new Date().toISOString();
+    }
+
     localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
 
-    // If cancelled, free up seat
     if (status === 'cancelled') {
       const trips = this.getTrips();
       const trip = trips.find(t => t.id === booking.tripId);
@@ -286,7 +362,80 @@ class StorageService {
     return booking;
   }
 
-  // --- Messages / In-App Coordination ---
+  markPaymentAsPaid(bookingId, referenceNo) {
+    const bookings = this.getBookings();
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return null;
+
+    if (!booking.payment) {
+      booking.payment = { modeId: 'gcash', modeName: 'GCash', amount: booking.fare };
+    }
+
+    booking.payment.status = 'paid';
+    booking.payment.referenceNo = referenceNo || `REF-${Math.floor(100000000 + Math.random() * 900000000)}`;
+    booking.payment.paidAt = new Date().toISOString();
+
+    localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
+    window.dispatchEvent(new CustomEvent('taralets:payment-updated', { detail: booking }));
+    return booking;
+  }
+
+  // --- Wallet & Top-Up System ---
+  topUpWallet(role, userId, amount, paymentModeId = 'gcash') {
+    const amt = Number(amount);
+    if (amt <= 0) throw new Error("Invalid top-up amount");
+
+    if (role === 'driver') {
+      const drivers = this.getDrivers();
+      const drv = drivers.find(d => d.id === userId);
+      if (drv) {
+        drv.walletBalance = (drv.walletBalance || 0) + amt;
+        this.saveDriver(drv);
+      }
+    } else {
+      const passengers = this.getPassengers();
+      const pax = passengers.find(p => p.id === userId);
+      if (pax) {
+        pax.walletBalance = (pax.walletBalance || 0) + amt;
+        this.savePassenger(pax);
+      }
+    }
+
+    const mode = this.getPaymentModeById(paymentModeId);
+    this.addTransaction({
+      userId,
+      userType: role,
+      type: "wallet_topup",
+      amount: amt,
+      modeId: paymentModeId,
+      description: `Loaded Commute Wallet via ${mode.name}`
+    });
+
+    window.dispatchEvent(new CustomEvent('taralets:wallet-updated', { detail: { role, userId, amount: amt } }));
+    return amt;
+  }
+
+  getTransactions(userId) {
+    const raw = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
+    const all = raw ? JSON.parse(raw) : [];
+    return userId ? all.filter(t => t.userId === userId) : all;
+  }
+
+  addTransaction(txData) {
+    const raw = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
+    const all = raw ? JSON.parse(raw) : [];
+    const newTx = {
+      id: "tx-" + Date.now(),
+      date: new Date().toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      status: "completed",
+      ...txData
+    };
+    all.unshift(newTx);
+    localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(all));
+    return newTx;
+  }
+
+  // --- Messages ---
   getMessages(bookingId) {
     const raw = localStorage.getItem(STORAGE_KEYS.MESSAGES);
     const all = raw ? JSON.parse(raw) : [];

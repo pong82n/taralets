@@ -39,7 +39,17 @@ Instead of passengers hailing rides and waiting, **TaraLets** inverts the model:
 ### 5. ⛽ Fuel & Toll Cost Splitter
 - Built-in fair fare calculation that splits fuel and expressway toll expenses reasonably per seat (e.g., ₱90 to ₱180 per trip).
 
-### 6. 🔄 Dual Persona Switcher
+### 6. 💳 Philippine Modes of Payment & Commute Wallet
+- **5 Comprehensive Commute Payment Channels:**
+  1. 💙 **GCash:** Scan Driver GCash QR or send directly to mobile number with instant reference logging.
+  2. 💚 **Maya:** Transfer via Maya @username or QR code with zero fees.
+  3. 💵 **Cash on Boarding (Kaliwaan):** In-person handover of exact fare upon boarding or reaching the workplace.
+  4. 🏦 **QR Ph / Universal Bank Transfer:** National QR Ph standard compatible with BDO, BPI, UnionBank, GoTyme, and Seabank via InstaPay.
+  5. ⚡ **TaraLets Commute Wallet:** In-app prepaid balance with 1-click automatic fare deduction and simulated top-up.
+- **Driver Payout QR Generator:** Modal showing driver's Universal QR Ph code, GCash mobile number, and bank details.
+- **Payment Verification:** Drivers can mark and verify payments directly from their live commute dashboard.
+
+### 7. 🔄 Dual Persona Switcher
 - Instant toggle between **Driver Mode** and **Commuter Mode** to test both perspectives.
 - Pre-seeded with realistic Philippine commute scenarios.
 - Persistent state saved to browser `localStorage` with a 1-click **Reset Demo Data** button.

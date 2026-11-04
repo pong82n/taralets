@@ -71,6 +71,18 @@
           </span>
         </div>
 
+        <!-- Commute Wallet Pill -->
+        <button onclick="window.taraletsApp.openPaymentCenterModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-full text-xs font-bold text-emerald-800 transition shadow-2xs" title="Open Modes of Payment & Commute Wallet">
+          <span>⚡</span>
+          <span id="header-wallet-balance">₱0.00</span>
+        </button>
+
+        <!-- Payment Modes Button -->
+        <button onclick="window.taraletsApp.openPaymentCenterModal()" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition" title="View Accepted Modes of Payment">
+          <span>💳</span>
+          <span>Payment Center</span>
+        </button>
+
         <!-- Reset Seed Data Button -->
         <button id="btn-reset-data" title="Reset to Sample Metro Manila Data" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,6 +382,16 @@
           <span class="text-[10px] text-slate-400 mt-1 block">Recommended cost-sharing to split fuel and expressway tolls.</span>
         </div>
 
+        <!-- Mode of Payment Choice -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            Mode of Payment (How Co-Passenger Will Settle)
+          </label>
+          <div id="modal-payment-modes-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- Populated dynamically: GCash, Maya, Cash on Boarding, QR Ph, TaraLets Wallet -->
+          </div>
+        </div>
+
         <!-- Driver's Pickup Landmark Note -->
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">
@@ -480,6 +502,33 @@
           <input type="text" id="trip-route-via" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="e.g. Commonwealth Ave > C5 > BGC" required>
         </div>
 
+        <!-- Accepted Modes of Payment -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Accepted Modes of Payment</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <label class="flex items-center gap-1.5 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+              <input type="checkbox" name="trip-accepted-payments" value="gcash" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+              <span class="text-xs font-semibold text-slate-800">💙 GCash</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+              <input type="checkbox" name="trip-accepted-payments" value="maya" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+              <span class="text-xs font-semibold text-slate-800">💚 Maya</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+              <input type="checkbox" name="trip-accepted-payments" value="cash" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+              <span class="text-xs font-semibold text-slate-800">💵 Cash</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+              <input type="checkbox" name="trip-accepted-payments" value="qrph" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+              <span class="text-xs font-semibold text-slate-800">🏦 QR Ph</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+              <input type="checkbox" name="trip-accepted-payments" value="wallet" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+              <span class="text-xs font-semibold text-slate-800">⚡ TL Wallet</span>
+            </label>
+          </div>
+        </div>
+
         <div>
           <label class="block font-bold text-slate-700 mb-1">Notes (Optional)</label>
           <input type="text" id="trip-notes" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="e.g. Extra helmet provided / trunk has space for bags">
@@ -556,6 +605,17 @@
         </div>
 
         <div>
+          <label class="block font-bold text-slate-700 mb-1">Preferred Mode of Payment</label>
+          <select id="commuter-payment-pref" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-medium">
+            <option value="gcash">💙 GCash (Instant e-Wallet)</option>
+            <option value="maya">💚 Maya (@handle or QR)</option>
+            <option value="cash">💵 Cash on Boarding (Kaliwaan)</option>
+            <option value="qrph">🏦 QR Ph Universal (BDO, BPI, GoTyme, Maya Bank)</option>
+            <option value="wallet">⚡ TaraLets Commute Wallet (Auto-settle)</option>
+          </select>
+        </div>
+
+        <div>
           <label class="block font-bold text-slate-700 mb-1">Short Bio / Commute Note</label>
           <input type="text" id="commuter-bio" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="e.g. Looking for reliable morning ride to beat rush hour.">
         </div>
@@ -617,6 +677,212 @@
         </button>
       </form>
 
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL 5: PAYMENT CENTER & COMMUTE WALLET                -->
+  <!-- ======================================================= -->
+  <div id="modal-payment-center" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-h-[90vh]">
+      
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-slate-900 to-teal-950 p-5 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">
+            Payment & Settlement Center
+          </span>
+          <h3 class="font-extrabold text-base mt-0.5">Modes of Payment & Commute Wallet</h3>
+        </div>
+        <button data-close-modal="modal-payment-center" class="text-white/80 hover:text-white p-1 rounded-lg">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-5 text-xs">
+        
+        <!-- Wallet Card -->
+        <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-md flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-emerald-100 tracking-wider">Commute Balance</span>
+            <div id="payment-modal-wallet-balance" class="text-2xl font-black mt-0.5">₱0.00</div>
+            <div id="payment-modal-user-name" class="text-[11px] text-emerald-100/90 mt-1">Loading...</div>
+          </div>
+          <div class="text-3xl bg-white/10 p-3 rounded-2xl backdrop-blur-xs">
+            ⚡
+          </div>
+        </div>
+
+        <!-- Top-Up Form -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h4 class="font-bold text-slate-800 text-xs mb-2">⚡ Quick Load / Top-Up Wallet</h4>
+          <form id="form-wallet-topup" class="space-y-3">
+            <div class="grid grid-cols-4 gap-1.5">
+              <button type="button" onclick="document.getElementById('topup-amount-input').value='150'" class="py-1.5 px-2 bg-white hover:bg-emerald-50 border border-slate-200 rounded-lg font-bold text-slate-700 hover:text-emerald-700 text-xs transition">
+                +₱150
+              </button>
+              <button type="button" onclick="document.getElementById('topup-amount-input').value='300'" class="py-1.5 px-2 bg-white hover:bg-emerald-50 border border-slate-200 rounded-lg font-bold text-slate-700 hover:text-emerald-700 text-xs transition">
+                +₱300
+              </button>
+              <button type="button" onclick="document.getElementById('topup-amount-input').value='500'" class="py-1.5 px-2 bg-white hover:bg-emerald-50 border border-slate-200 rounded-lg font-bold text-slate-700 hover:text-emerald-700 text-xs transition">
+                +₱500
+              </button>
+              <button type="button" onclick="document.getElementById('topup-amount-input').value='1000'" class="py-1.5 px-2 bg-white hover:bg-emerald-50 border border-slate-200 rounded-lg font-bold text-slate-700 hover:text-emerald-700 text-xs transition">
+                +₱1,000
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Amount (₱)</label>
+                <input type="number" id="topup-amount-input" class="w-full p-2 border border-slate-300 rounded-lg font-bold" value="300" min="50" step="50" required>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Source Account</label>
+                <select id="topup-payment-mode" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-medium">
+                  <option value="gcash">💙 GCash</option>
+                  <option value="maya">💚 Maya</option>
+                  <option value="qrph">🏦 Bank / QR Ph</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition">
+              Confirm Load Credits
+            </button>
+          </form>
+        </div>
+
+        <!-- Supported Payment Modes List -->
+        <div>
+          <h4 class="font-bold text-slate-800 text-xs mb-2">🇵🇭 Supported Modes of Payment</h4>
+          <div class="space-y-2">
+            <div class="p-2.5 rounded-xl border border-slate-200 flex items-center justify-between bg-white">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">💙</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">GCash</strong>
+                  <span class="text-[10px] text-slate-500">Scan Driver QR or send to mobile number. Instant settlement.</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Direct</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl border border-slate-200 flex items-center justify-between bg-white">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">💚</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">Maya</strong>
+                  <span class="text-[10px] text-slate-500">Transfer via Maya @username or QR. Zero transfer fees.</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Direct</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl border border-slate-200 flex items-center justify-between bg-white">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">💵</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">Cash on Boarding (Kaliwaan)</strong>
+                  <span class="text-[10px] text-slate-500">Pay exact cash to driver when boarding or reaching the office.</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">In-Person</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl border border-slate-200 flex items-center justify-between bg-white">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">🏦</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">QR Ph / Universal Bank Transfer</strong>
+                  <span class="text-[10px] text-slate-500">InstaPay compatible with BDO, BPI, UnionBank, GoTyme, and Seabank.</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">InstaPay</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl border border-slate-200 flex items-center justify-between bg-white">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">⚡</span>
+                <div>
+                  <strong class="text-slate-900 block text-xs">TaraLets Commute Wallet</strong>
+                  <span class="text-[10px] text-slate-500">Preloaded credits automatically deducted when ride is confirmed.</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-800">Automated</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div>
+          <h4 class="font-bold text-slate-800 text-xs mb-2">📜 Recent Transactions</h4>
+          <div id="payment-modal-transactions" class="space-y-1.5">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL 6: DRIVER PAYMENT QR & TRANSFER DETAILS           -->
+  <!-- ======================================================= -->
+  <div id="modal-driver-qr" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-slate-100 overflow-hidden text-center">
+      
+      <div class="bg-slate-900 p-4 text-white flex items-center justify-between">
+        <h4 class="font-bold text-sm">Driver Payment QR</h4>
+        <button data-close-modal="modal-driver-qr" class="text-white/80 hover:text-white p-1 rounded-lg">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 text-xs">
+        
+        <div>
+          <span class="text-slate-400 block text-[10px]">Payment to Driver</span>
+          <h3 id="qr-modal-driver-name" class="font-extrabold text-base text-slate-900">Driver Name</h3>
+          <p id="qr-modal-route" class="text-[11px] text-slate-500 mt-0.5">Route info</p>
+          <div id="qr-modal-amount" class="text-2xl font-black text-emerald-700 mt-1">₱150.00</div>
+        </div>
+
+        <!-- Simulated QR Ph Visual Card -->
+        <div class="p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center">
+          <div class="w-40 h-40 bg-white border border-slate-200 rounded-xl p-2 shadow-inner flex items-center justify-center">
+            <!-- SVG QR Code Mockup -->
+            <svg class="w-full h-full text-slate-900" viewBox="0 0 100 100" fill="currentColor">
+              <path d="M10 10 h30 v30 h-30 z M15 15 v20 h20 v-20 z M22 22 h6 v6 h-6 z M60 10 h30 v30 h-30 z M65 15 v20 h20 v-20 z M72 22 h6 v6 h-6 z M10 60 h30 v30 h-30 z M15 65 v20 h20 v-20 z M22 72 h6 v6 h-6 z M45 10 h5 v10 h-5 z M45 25 h10 v5 h-10 z M50 35 h5 v10 h-5 z M60 45 h10 v5 h-10 z M75 45 h15 v5 h-15 z M45 55 h5 v15 h-5 z M55 55 h10 v10 h-10 z M70 55 h5 v10 h-5 z M80 55 h10 v20 h-10 z M45 75 h10 v15 h-10 z M60 70 h15 v5 h-15 z M65 80 h25 v10 h-25 z" />
+            </svg>
+          </div>
+          <span class="mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+            <span>🇵🇭</span> QR Ph Universal Code
+          </span>
+        </div>
+
+        <!-- Account details list -->
+        <div class="text-left bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5 text-[11px]">
+          <div>
+            <span class="text-slate-400 block text-[10px]">GCash Number:</span>
+            <strong id="qr-modal-gcash-no" class="text-slate-800">0917-555-8821</strong>
+            <span id="qr-modal-gcash-name" class="text-slate-500 text-[10px] ml-1">(MARCO R.)</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">Maya Handle:</span>
+            <strong id="qr-modal-maya-handle" class="text-slate-800">@marcoreyes</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">Bank / InstaPay:</span>
+            <strong id="qr-modal-bank-info" class="text-slate-800">BDO: 0041-8829-1049</strong>
+          </div>
+        </div>
+
+        <button id="btn-qr-mark-paid" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition">
+          I Have Sent the Payment ✓
+        </button>
+
+      </div>
     </div>
   </div>
 
