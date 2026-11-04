@@ -1,0 +1,69 @@
+/* TaraLets - Custom Commute Platform Styles */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: #f8fafc;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Custom Leaflet overrides */
+.leaflet-container {
+  font-family: inherit;
+  border-radius: 1rem;
+}
+
+.custom-map-icon {
+  background: transparent;
+  border: none;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px;
+  line-height: 1.4;
+}
+
+/* Glassmorphism accents */
+.glass-header {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Badge glows */
+.badge-match-high {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+/* Animation utilities */
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 3s infinite ease-in-out;
+}
