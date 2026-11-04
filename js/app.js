@@ -1,6 +1,6 @@
 /**
- * TaraLets - Core Application Controller with Modes of Payment Support
- * (GCash, Maya, Cash on Boarding, QR Ph / Bank, TaraLets Wallet)
+ * TaraLets - Core Application Controller
+ * Handles Driver/Passenger Workflows, Verification, Bookings, and Payments
  */
 
 import { storage } from './storage.js';
@@ -13,6 +13,7 @@ class TaraLetsApp {
     this.mapManager = new CommuteMapManager('commute-map');
     this.selectedTripId = null;
     this.selectedBookingPassengerId = null;
+    this.requestingTripId = null;
   }
 
   init() {
@@ -103,6 +104,12 @@ class TaraLetsApp {
       bookingForm.addEventListener('submit', (e) => this.handleConfirmBookingSubmit(e));
     }
 
+    // Passenger Request Seat Form
+    const reqForm = document.getElementById('form-passenger-request-seat');
+    if (reqForm) {
+      reqForm.addEventListener('submit', (e) => this.handlePassengerRequestSubmit(e));
+    }
+
     // Add Passenger Request Form
     const paxForm = document.getElementById('form-add-commuter');
     if (paxForm) {
@@ -128,6 +135,21 @@ class TaraLetsApp {
     window.addEventListener('taralets:booking-created', (e) => {
       const pMode = e.detail.payment?.modeName || 'Selected Mode';
       this.showToast(`🎉 Seat booked for ${e.detail.passengerName}! Payment: ${pMode}.`, "success");
+      this.render();
+    });
+
+    window.addEventListener('taralets:booking-requested', (e) => {
+      this.showToast(`🔔 New booking request from ${e.detail.passengerName}! Please verify details.`, "info");
+      this.render();
+    });
+
+    window.addEventListener('taralets:booking-accepted', (e) => {
+      this.showToast(`✓ Booking accepted for ${e.detail.passengerName}!`, "success");
+      this.render();
+    });
+
+    window.addEventListener('taralets:booking-declined', (e) => {
+      this.showToast(`Booking request declined.`, "info");
       this.render();
     });
 
@@ -245,6 +267,8 @@ class TaraLetsApp {
   }
 
   renderDriverDashboard() {
+    this.renderDriverPendingRequests();
+
     const currentDriver = storage.getCurrentDriver();
     const myTrips = storage.getTripsByDriver(currentDriver.id);
     const tripsContainer = document.getElementById('driver-trips-list');
@@ -332,6 +356,100 @@ class TaraLetsApp {
 
     this.renderMatchingPassengersRadar();
     this.renderDriverBookings();
+  }
+
+  renderDriverPendingRequests() {
+    const container = document.getElementById('driver-pending-requests-section');
+    if (!container) return;
+
+    const currentDriver = storage.getCurrentDriver();
+    const allBookings = storage.getBookings();
+    const pending = allBookings.filter(b => b.driverId === currentDriver.id && b.status === 'pending_verification');
+
+    if (pending.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-4 shadow-sm mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="flex h-3 w-3 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+            </span>
+            <h3 class="font-extrabold text-sm text-amber-950">
+              🔔 Commuter Booking Requests Awaiting Your Verification (${pending.length})
+            </h3>
+          </div>
+          <span class="text-[10px] font-bold uppercase bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full">
+            Driver Action Required
+          </span>
+        </div>
+        <p class="text-xs text-amber-800 mb-3">
+          These commuters requested a seat on your posted travel route. Only you can verify their workplace details and accept the booking!
+        </p>
+
+        <div class="space-y-2.5">
+          ${pending.map(b => {
+            const pVerif = b.passengerVerification || {};
+            const mode = storage.getPaymentModeById(b.payment?.modeId || 'gcash');
+
+            return `
+              <div class="bg-white p-3.5 rounded-xl border border-amber-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="flex items-start gap-3">
+                  <img src="${b.passengerAvatar}" alt="${b.passengerName}" class="w-12 h-12 rounded-full object-cover border-2 border-amber-100 shadow-2xs mt-0.5">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-bold text-slate-900 text-sm">${b.passengerName}</h4>
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
+                        🛡️ ${pVerif.employeeIdBadge || 'Verified Employee'}
+                      </span>
+                    </div>
+                    <p class="text-xs font-semibold text-purple-700 mt-0.5">
+                      🏢 ${b.workplaceName}
+                    </p>
+                    <p class="text-xs text-slate-500">
+                      📍 <strong>Pickup:</strong> ${b.pickupPoint} • <strong>Shift:</strong> ${pVerif.workSchedule || '08:00 AM - 05:00 PM'}
+                    </p>
+                    ${pVerif.note ? `
+                      <p class="text-[11px] text-slate-600 italic mt-1 bg-slate-50 p-1.5 rounded">
+                        "${pVerif.note}"
+                      </p>
+                    ` : ''}
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 self-end md:self-center">
+                  <div class="text-right mr-2 hidden sm:block">
+                    <span class="font-extrabold text-sm text-slate-900">₱${b.fare}</span>
+                    <span class="block text-[10px] text-slate-500">${mode.name}</span>
+                  </div>
+
+                  <button onclick="window.taraletsApp.openVerifyPassengerModal('${b.id}')"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-lg transition border border-slate-200 flex items-center gap-1">
+                    <span>🛡️</span>
+                    <span>Review Details</span>
+                  </button>
+
+                  <button onclick="window.taraletsApp.acceptPassengerBooking('${b.id}')"
+                    class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center gap-1">
+                    <span>✓</span>
+                    <span>Verify &amp; Accept</span>
+                  </button>
+
+                  <button onclick="window.taraletsApp.declinePassengerBooking('${b.id}')"
+                    class="px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 font-bold rounded-lg transition" title="Decline">
+                    ✕
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
   }
 
   selectTrip(tripId) {
@@ -464,14 +582,14 @@ class TaraLetsApp {
 
   renderDriverBookings() {
     const currentDriver = storage.getCurrentDriver();
-    const bookings = storage.getBookings().filter(b => b.driverId === currentDriver.id);
+    const bookings = storage.getBookings().filter(b => b.driverId === currentDriver.id && b.status !== 'pending_verification');
     const container = document.getElementById('driver-active-bookings-list');
     if (!container) return;
 
     if (bookings.length === 0) {
       container.innerHTML = `
         <div class="text-center py-6 text-gray-400 text-xs">
-          No booked passengers yet. Use the radar above to book colleagues going your way!
+          No confirmed bookings yet. Use the radar above to book colleagues going your way!
         </div>
       `;
       return;
@@ -579,27 +697,28 @@ class TaraLetsApp {
       } else {
         container.innerHTML = `
           <div class="mb-2">
-            <h3 class="font-bold text-gray-900 text-sm">🎟️ Your Commute Bookings (Created by Drivers)</h3>
-            <p class="text-xs text-gray-500">Drivers traveling to ${currentPax.company} who booked seats for you</p>
+            <h3 class="font-bold text-gray-900 text-sm">🎟️ Your Commute Bookings & Requests</h3>
+            <p class="text-xs text-gray-500">Trips to ${currentPax.company}</p>
           </div>
           <div class="space-y-3">
             ${myBookings.map(b => {
               const payment = b.payment || { modeId: 'gcash', modeName: 'GCash', status: 'pending_digital' };
               const mode = storage.getPaymentModeById(payment.modeId);
               const isPaid = payment.status === 'paid';
+              const isPendingVerif = b.status === 'pending_verification';
 
               return `
-                <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/30 shadow-sm">
+                <div class="p-4 rounded-xl border ${isPendingVerif ? 'border-amber-300 bg-amber-50/40' : 'border-emerald-200 bg-emerald-50/30'} shadow-sm">
                   <div class="flex items-start justify-between">
                     <div class="flex items-center gap-3">
-                      <span class="p-2.5 bg-emerald-600 text-white rounded-xl text-lg">
+                      <span class="p-2.5 ${isPendingVerif ? 'bg-amber-500' : 'bg-emerald-600'} text-white rounded-xl text-lg">
                         ${b.vehicleType === 'motorcycle' ? '🏍️' : '🚗'}
                       </span>
                       <div>
                         <div class="flex items-center gap-2">
                           <h4 class="font-bold text-gray-900 text-sm">${b.driverName}</h4>
-                          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 uppercase">
-                            ${b.status}
+                          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${isPendingVerif ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'} uppercase">
+                            ${isPendingVerif ? 'Pending Driver Verification' : b.status}
                           </span>
                         </div>
                         <p class="text-xs font-semibold text-gray-700 mt-0.5">Vehicle: ${b.vehicleModel}</p>
@@ -607,14 +726,20 @@ class TaraLetsApp {
                       </div>
                     </div>
                     <div class="flex flex-col items-end gap-1.5">
-                      <button onclick="window.taraletsApp.openChat('${b.id}')"
-                        class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1">
-                        💬 Chat Driver
-                      </button>
-                      <button onclick="window.taraletsApp.openDriverQrModal('${b.id}')"
-                        class="text-xs font-semibold text-blue-700 hover:text-blue-800 flex items-center gap-1">
-                        💳 Pay Driver
-                      </button>
+                      ${!isPendingVerif ? `
+                        <button onclick="window.taraletsApp.openChat('${b.id}')"
+                          class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1">
+                          💬 Chat Driver
+                        </button>
+                        <button onclick="window.taraletsApp.openDriverQrModal('${b.id}')"
+                          class="text-xs font-semibold text-blue-700 hover:text-blue-800 flex items-center gap-1">
+                          💳 Pay Driver
+                        </button>
+                      ` : `
+                        <span class="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-1 rounded">
+                          Awaiting Driver Accept
+                        </span>
+                      `}
                     </div>
                   </div>
 
@@ -628,15 +753,15 @@ class TaraLetsApp {
                       </div>
                     </div>
                     <span class="px-2 py-0.5 rounded font-bold text-[10px] ${
-                      isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      isPaid ? 'bg-emerald-100 text-emerald-800' : isPendingVerif ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
                     }">
-                      ${isPaid ? 'PAID & VERIFIED' : 'PAYMENT DUE'}
+                      ${isPaid ? 'PAID & VERIFIED' : isPendingVerif ? 'AWAITING VERIFICATION' : 'PAYMENT DUE'}
                     </span>
                   </div>
 
-                  ${b.driverNote ? `
+                  ${b.driverNote || b.passengerVerification?.note ? `
                     <div class="mt-2.5 p-2 bg-white rounded-lg text-xs text-gray-700 border border-gray-100 italic">
-                      "${b.driverNote}"
+                      "${b.driverNote || b.passengerVerification?.note}"
                     </div>
                   ` : ''}
                 </div>
@@ -689,15 +814,40 @@ class TaraLetsApp {
               }).join('')}
             </div>
 
-            ${isBooked ? `
-              <div class="mt-2 text-xs font-bold text-emerald-700 bg-emerald-50 p-1.5 rounded text-center">
-                ✓ You are booked on this driver's route!
-              </div>
-            ` : `
-              <div class="mt-2 text-xs text-gray-500 italic bg-gray-50 p-1.5 rounded">
-                Driver will review co-workers along route and assign bookings.
-              </div>
-            `}
+            ${(() => {
+              const myPendingBooking = storage.getBookings().find(b => b.tripId === t.id && b.passengerId === currentPax.id && b.status === 'pending_verification');
+              const hasSeats = (t.bookedSeats || 0) < t.totalSeats;
+
+              if (isBooked) {
+                return `
+                  <div class="mt-2.5 p-2 bg-emerald-50 text-emerald-800 rounded-lg text-xs font-bold flex items-center justify-between">
+                    <span>✓ You are booked on this driver's route!</span>
+                    <button onclick="window.taraletsApp.openChatForPassenger('${currentPax.id}')" class="text-xs text-emerald-700 hover:text-emerald-800 underline">
+                      💬 Chat Driver
+                    </button>
+                  </div>
+                `;
+              } else if (myPendingBooking) {
+                return `
+                  <div class="mt-2.5 p-2 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg text-xs font-medium flex items-center justify-between">
+                    <span>⏳ Booking Request Sent — Waiting for Driver to Verify Details &amp; Accept</span>
+                    <span class="text-[10px] font-bold bg-amber-200 px-2 py-0.5 rounded-full">Pending Verification</span>
+                  </div>
+                `;
+              } else if (hasSeats) {
+                return `
+                  <div class="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                    <span class="text-[11px] text-slate-500">${t.totalSeats - (t.bookedSeats || 0)} seat(s) available</span>
+                    <button onclick="window.taraletsApp.openPassengerRequestModal('${t.id}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center gap-1">
+                      <span>🎟️</span>
+                      <span>Request to Book Seat</span>
+                    </button>
+                  </div>
+                `;
+              } else {
+                return `<div class="mt-2.5 p-1.5 bg-slate-50 text-slate-400 text-xs rounded text-center">Vehicle Full</div>`;
+              }
+            })()}
           </div>
         `;
       }).join('');
@@ -929,6 +1079,140 @@ class TaraLetsApp {
     this.render();
   }
 
+  openPassengerRequestModal(tripId) {
+    const trip = storage.getTripById(tripId);
+    if (!trip) return;
+
+    const modal = document.getElementById('modal-passenger-request-seat');
+    if (!modal) return;
+
+    const currentPax = storage.getCurrentPassenger();
+
+    this.requestingTripId = tripId;
+    document.getElementById('req-modal-driver-name').textContent = trip.driverName;
+    document.getElementById('req-modal-route').textContent = `${trip.originName} ➔ ${trip.destinationName}`;
+    document.getElementById('req-modal-time').textContent = trip.departureTime;
+    document.getElementById('req-modal-vehicle').textContent = `${trip.vehicleType === 'motorcycle' ? '🏍️' : '🚗'} ${trip.vehicleModel}`;
+    document.getElementById('req-modal-fare').textContent = `₱${trip.farePerSeat}`;
+
+    document.getElementById('req-modal-pickup-input').value = currentPax.pickupLocation || '';
+    document.getElementById('req-modal-verification-company').textContent = `${currentPax.company} (ID Verified)`;
+    document.getElementById('req-modal-verification-email').textContent = `${currentPax.name.toLowerCase().replace(/[^a-z]/g, '.')}@${currentPax.company.toLowerCase().includes('google') ? 'google.com' : currentPax.company.toLowerCase().includes('shopee') ? 'shopee.com' : 'corp.ph'}`;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  handlePassengerRequestSubmit(e) {
+    e.preventDefault();
+    const tripId = this.requestingTripId;
+    const currentPax = storage.getCurrentPassenger();
+    const pickupPoint = document.getElementById('req-modal-pickup-input').value;
+    const paymentModeId = document.getElementById('req-modal-payment-mode').value;
+    const passengerNote = document.getElementById('req-modal-note-input').value;
+
+    try {
+      storage.createPassengerBookingRequest({
+        tripId,
+        passengerId: currentPax.id,
+        pickupPoint,
+        paymentModeId,
+        passengerNote
+      });
+
+      const modal = document.getElementById('modal-passenger-request-seat');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      this.showToast(`🚀 Booking request sent to driver! Awaiting driver verification.`, "success");
+      this.render();
+    } catch (err) {
+      this.showToast(err.message, "error");
+    }
+  }
+
+  openVerifyPassengerModal(bookingId) {
+    const booking = storage.getBookingById(bookingId);
+    if (!booking) return;
+
+    const modal = document.getElementById('modal-verify-passenger');
+    if (!modal) return;
+
+    const pVerif = booking.passengerVerification || {};
+    const mode = storage.getPaymentModeById(booking.payment?.modeId || 'gcash');
+
+    document.getElementById('verify-modal-pax-avatar').src = booking.passengerAvatar;
+    document.getElementById('verify-modal-pax-name').textContent = booking.passengerName;
+    document.getElementById('verify-modal-pax-phone').textContent = booking.passengerPhone || '0917-000-0000';
+    document.getElementById('verify-modal-pax-company').textContent = booking.workplaceName;
+
+    document.getElementById('verify-modal-company-match').textContent = pVerif.companyName || booking.workplaceName;
+    document.getElementById('verify-modal-corp-email').textContent = pVerif.companyEmail || 'verified.employee@corp.ph';
+    document.getElementById('verify-modal-badge-id').textContent = pVerif.employeeIdBadge || '#VERIFIED-BADGE';
+    document.getElementById('verify-modal-shift').textContent = pVerif.workSchedule || '08:00 AM - 05:00 PM';
+    document.getElementById('verify-modal-pickup').textContent = booking.pickupPoint;
+    document.getElementById('verify-modal-payment').textContent = `₱${booking.fare} via ${mode.name}`;
+    document.getElementById('verify-modal-note').textContent = `"${pVerif.note || 'Ready at pickup landmark with exact fare.'}"`;
+
+    const acceptBtn = document.getElementById('btn-verify-accept');
+    if (acceptBtn) {
+      acceptBtn.onclick = () => {
+        this.acceptPassengerBooking(booking.id);
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+    }
+
+    const declineBtn = document.getElementById('btn-verify-decline');
+    if (declineBtn) {
+      declineBtn.onclick = () => {
+        this.declinePassengerBooking(booking.id);
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  acceptPassengerBooking(bookingId) {
+    try {
+      storage.acceptPassengerBooking(bookingId);
+      this.showToast("✓ Passenger details verified! Booking accepted and seat confirmed.", "success");
+      this.render();
+    } catch (err) {
+      this.showToast(err.message, "error");
+    }
+  }
+
+  declinePassengerBooking(bookingId) {
+    storage.declinePassengerBooking(bookingId);
+    this.showToast("Passenger booking request declined.", "info");
+    this.render();
+  }
+
+  openAppDownloadModal() {
+    const modal = document.getElementById('modal-app-download');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+  }
+
+  openRoleSimulator(role) {
+    storage.setActiveRole(role);
+    const modal = document.getElementById('modal-app-download');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    this.showToast(`Switched to TaraLets ${role === 'driver' ? 'Driver' : 'Commuter'} Edition!`, "info");
+  }
+
+  // --- PAYMENT & WALLET MODALS ---
   openPaymentCenterModal() {
     const modal = document.getElementById('modal-payment-center');
     if (!modal) return;
