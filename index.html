@@ -83,6 +83,12 @@
           <span>Payment Center</span>
         </button>
 
+        <!-- Mobile Apps QR Codes Button -->
+        <button onclick="window.taraletsApp.openAppDownloadModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-sm" title="Scan QR Code to Install Driver or Passenger Mobile Apps">
+          <span>📱</span>
+          <span class="hidden sm:inline">Get Mobile Apps</span>
+        </button>
+
         <!-- Reset Seed Data Button -->
         <button id="btn-reset-data" title="Reset to Sample Metro Manila Data" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,6 +156,11 @@
             <span>Post New Commute Trip</span>
           </button>
         </div>
+      </div>
+
+      <!-- Driver Pending Booking Requests Review Banner -->
+      <div id="driver-pending-requests-section">
+        <!-- Rendered dynamically with passenger details verification & acceptance actions -->
       </div>
 
       <!-- Grid: Trips, Matching Radar, and Live Interactive Map -->
@@ -881,6 +892,273 @@
         <button id="btn-qr-mark-paid" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition">
           I Have Sent the Payment ✓
         </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL 7: MOBILE APPS INSTALLATION QR CODES              -->
+  <!-- ======================================================= -->
+  <div id="modal-app-download" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-h-[90vh]">
+      
+      <!-- Header -->
+      <div class="bg-slate-900 p-5 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">
+            Official Mobile Applications
+          </span>
+          <h3 class="font-extrabold text-base mt-0.5">Scan QR Code to Install Mobile Apps</h3>
+        </div>
+        <button data-close-modal="modal-app-download" class="text-white/80 hover:text-white p-1 rounded-lg">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6">
+        <p class="text-xs text-slate-500 text-center">
+          TaraLets is designed with dedicated experiences for vehicle owners and commuters. Scan the respective QR code with your mobile camera or tap to launch.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- DRIVER APP QR CARD -->
+          <div class="p-5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/20 flex flex-col items-center text-center shadow-sm">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase mb-2">
+              🚗 For Vehicle Owners Only
+            </span>
+            <h4 class="font-extrabold text-slate-900 text-sm">TaraLets Driver Edition</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">Car &amp; Motorcycle Commute Drivers</p>
+            
+            <div class="my-4 w-48 h-48 bg-white p-2 rounded-2xl border border-slate-200 shadow-md">
+              <img src="assets/qr/qr-driver-app.svg" alt="TaraLets Driver App QR" class="w-full h-full object-contain">
+            </div>
+
+            <ul class="text-[11px] text-slate-600 text-left space-y-1 mb-4 w-full bg-white p-3 rounded-xl border border-slate-100">
+              <li class="flex items-center gap-1.5"><span>✓</span> Post daily commute travel routes</li>
+              <li class="flex items-center gap-1.5"><span>✓</span> Verify &amp; accept matching co-workers</li>
+              <li class="flex items-center gap-1.5"><span>✓</span> Gas &amp; toll expense splitting calculator</li>
+              <li class="flex items-center gap-1.5"><span>✓</span> Payouts via GCash, Maya &amp; Bank QR</li>
+            </ul>
+
+            <button onclick="window.taraletsApp.openRoleSimulator('driver')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+              Launch Driver App Mode 🚗
+            </button>
+          </div>
+
+          <!-- PASSENGER / CO-RIDER APP QR CARD -->
+          <div class="p-5 rounded-2xl border-2 border-blue-500/40 bg-blue-50/20 flex flex-col items-center text-center shadow-sm">
+            <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-extrabold uppercase mb-2">
+              🧍 For Co-Riders &amp; Commuters Only
+            </span>
+            <h4 class="font-extrabold text-slate-900 text-sm">TaraLets Passenger Edition</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">Colleagues &amp; Office Workers</p>
+            
+            <div class="my-4 w-48 h-48 bg-white p-2 rounded-2xl border border-slate-200 shadow-md">
+              <img src="assets/qr/qr-passenger-app.svg" alt="TaraLets Passenger App QR" class="w-full h-full object-contain">
+            </div>
+
+            <ul class="text-[11px] text-slate-600 text-left space-y-1 mb-4 w-full bg-white p-3 rounded-xl border border-slate-100">
+              <li class="flex items-center gap-1.5"><span>✓</span> Browse drivers going to your office building</li>
+              <li class="flex items-center gap-1.5"><span>✓</span> Request seat booking on driver travel routes</li>
+              <li class="flex items-center gap-1.5"><span>✓</span> Company employee ID badge verification</li>
+              <li class="flex items-center gap-1.5"><span>✓</span> In-app coordination &amp; contactless payments</li>
+            </ul>
+
+            <button onclick="window.taraletsApp.openRoleSimulator('passenger')" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+              Launch Commuter App Mode 🚶
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL 8: PASSENGER REQUEST TO BOOK SEAT ON DRIVER ROUTE -->
+  <!-- ======================================================= -->
+  <div id="modal-passenger-request-seat" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+      
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] uppercase tracking-wider font-extrabold bg-white/20 px-2 py-0.5 rounded-full">
+            Commuter Booking Request
+          </span>
+          <h3 class="font-extrabold text-base mt-1">Request Seat on Driver's Commute</h3>
+        </div>
+        <button data-close-modal="modal-passenger-request-seat" class="text-white/80 hover:text-white p-1 rounded-lg">
+          ✕
+        </button>
+      </div>
+
+      <form id="form-passenger-request-seat" class="p-5 space-y-4 text-xs">
+        
+        <!-- Trip Info Card -->
+        <div class="bg-blue-50/60 p-3.5 rounded-xl border border-blue-200 flex items-start justify-between">
+          <div>
+            <span class="text-[10px] font-bold uppercase text-blue-700">Driver &amp; Route</span>
+            <h4 id="req-modal-driver-name" class="font-bold text-sm text-slate-900">Driver Name</h4>
+            <p id="req-modal-route" class="text-slate-600 font-medium text-xs mt-0.5">Route info</p>
+            <p class="text-slate-500 mt-1">
+              ⏰ Departs: <strong id="req-modal-time">07:00 AM</strong> • <span id="req-modal-vehicle">Vehicle</span>
+            </p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block font-medium">Fare Share</span>
+            <div id="req-modal-fare" class="text-xl font-black text-blue-700">₱150</div>
+          </div>
+        </div>
+
+        <!-- Pickup Landmark -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Your Pickup Landmark (Along Driver's Route)</label>
+          <input type="text" id="req-modal-pickup-input" class="w-full p-2.5 border border-slate-300 rounded-lg" placeholder="e.g. Commonwealth Market footbridge / Ateneo Gate 3" required>
+        </div>
+
+        <!-- Mode of Payment -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">How will you pay your share?</label>
+          <select id="req-modal-payment-mode" class="w-full p-2.5 border border-slate-300 rounded-lg bg-white font-medium">
+            <option value="gcash">💙 GCash Transfer</option>
+            <option value="maya">💚 Maya (@handle or QR)</option>
+            <option value="cash">💵 Cash on Boarding (Kaliwaan)</option>
+            <option value="qrph">🏦 QR Ph / Bank Transfer (InstaPay)</option>
+            <option value="wallet">⚡ TaraLets Commute Wallet (Auto-settle)</option>
+          </select>
+        </div>
+
+        <!-- Verification Details Attached -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+          <span class="text-[10px] font-bold uppercase text-purple-700 block">Workplace Verification Details Attached</span>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-600">Company &amp; ID:</span>
+            <strong id="req-modal-verification-company" class="text-slate-900">Shopee PH (Verified ID)</strong>
+          </div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-600">Corporate Email:</span>
+            <span id="req-modal-verification-email" class="font-mono text-slate-700">commuter@corp.ph</span>
+          </div>
+          <p class="text-[10px] text-slate-400 italic mt-1">
+            * The driver will inspect and verify your company ID and workplace match before accepting your booking.
+          </p>
+        </div>
+
+        <!-- Note to Driver -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Note to Driver</label>
+          <textarea id="req-modal-note-input" rows="2" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="e.g. Hi! Heading to the same office building. I will be ready 5 minutes early at the landmark!"></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" data-close-modal="modal-passenger-request-seat" class="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-lg">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition">
+            Send Booking Request to Driver 🚀
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL 9: DRIVER VERIFICATION & ACCEPTANCE INSPECTOR     -->
+  <!-- ======================================================= -->
+  <div id="modal-verify-passenger" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+      
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-900 p-4 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🛡️</span>
+          <div>
+            <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-300">
+              Driver Passenger Verification
+            </span>
+            <h3 class="font-extrabold text-base leading-tight">Verify Co-Worker Details</h3>
+          </div>
+        </div>
+        <button data-close-modal="modal-verify-passenger" class="text-white/80 hover:text-white p-1 rounded-lg">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 text-xs">
+        
+        <!-- Passenger Profile Header -->
+        <div class="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <img id="verify-modal-pax-avatar" src="" alt="Pax" class="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm mt-0.5">
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <h4 id="verify-modal-pax-name" class="font-extrabold text-base text-slate-900">Passenger Name</h4>
+              <span id="verify-modal-badge" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
+                VERIFIED CO-WORKER
+              </span>
+            </div>
+            <p id="verify-modal-pax-phone" class="text-slate-500 font-medium">0917-000-0000</p>
+            <p id="verify-modal-pax-company" class="text-purple-700 font-bold mt-1 text-xs">Shopee Philippines</p>
+          </div>
+        </div>
+
+        <!-- Verification Checklist -->
+        <div class="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-200 space-y-2">
+          <h4 class="font-extrabold text-emerald-950 text-xs flex items-center gap-1.5">
+            <span>🛡️</span> Security &amp; Workplace Fit Check
+          </h4>
+          
+          <div class="space-y-1.5 text-[11px] text-slate-700">
+            <div class="flex items-center justify-between">
+              <span>Corporate Employer:</span>
+              <strong id="verify-modal-company-match" class="text-slate-900">Shopee PH (Net Park Neighbor)</strong>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Corporate Email:</span>
+              <span id="verify-modal-corp-email" class="font-mono text-emerald-700 font-bold">paulo@shopee.com</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Employee Badge ID:</span>
+              <span id="verify-modal-badge-id" class="font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-800">#SHP-8812</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Shift Sync:</span>
+              <strong id="verify-modal-shift" class="text-slate-900">08:00 AM - 05:00 PM</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Requested Pickup Spot & Fare Share -->
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div>
+            <span class="text-[10px] text-slate-400 block font-semibold">Requested Pickup Spot:</span>
+            <strong id="verify-modal-pickup" class="text-slate-900 block mt-0.5">Commonwealth Market</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block font-semibold">Fare Split &amp; Payment Mode:</span>
+            <strong id="verify-modal-payment" class="text-emerald-700 block mt-0.5">₱150 via GCash</strong>
+          </div>
+        </div>
+
+        <!-- Passenger Note -->
+        <div>
+          <span class="text-[10px] text-slate-400 block font-semibold mb-1">Passenger Note:</span>
+          <div id="verify-modal-note" class="p-2.5 bg-white rounded-lg border border-slate-200 italic text-slate-700 text-xs">
+            "Heading to same building! Will be waiting at Gate 3 with my ID ready."
+          </div>
+        </div>
+
+        <!-- Verification Decision Buttons -->
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-verify-decline" class="px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition">
+            ✕ Decline Request
+          </button>
+          <button id="btn-verify-accept" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5">
+            <span>✓</span>
+            <span>Verify &amp; Accept Booking</span>
+          </button>
+        </div>
 
       </div>
     </div>

@@ -543,5 +543,42 @@ export const INITIAL_BOOKINGS = [
       paidAt: null
     },
     createdAt: "2026-11-04T01:25:00Z"
+  },
+  {
+    id: "bk-103",
+    tripId: "trip-01",
+    driverId: "drv-01",
+    driverName: "Engr. Marco Reyes",
+    driverPhone: "0917-555-8821",
+    vehicleType: "car",
+    vehicleModel: "Toyota Vios 1.5G (NCA 4819)",
+    passengerId: "pax-01",
+    passengerName: "Paulo Gomez",
+    passengerPhone: "0917-111-2290",
+    passengerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
+    workplaceName: "Shopee Philippines (W City Center BGC)",
+    pickupPoint: "Commonwealth Market / Don Antonio, QC",
+    destinationPoint: "W City Center, 7th Ave, BGC",
+    scheduledTime: "06:45 AM",
+    fare: 150,
+    status: "pending_verification",
+    initiatedBy: "passenger",
+    passengerVerification: {
+      companyName: "Shopee Philippines",
+      companyEmail: "paulo.gomez@shopee.com",
+      employeeIdBadge: "VERIFIED_CORP_BADGE_#SHP-8812",
+      workplaceId: "hub-bgc",
+      workSchedule: "08:00 AM - 05:00 PM",
+      pickupAddress: "Commonwealth Market footbridge, QC",
+      note: "Hi Engr. Marco! I work at W City Center BGC just 2 blocks from Net Park. Quiet commuter with verified Shopee employee ID. Requesting seat 2!"
+    },
+    payment: {
+      modeId: "gcash",
+      modeName: "GCash",
+      status: "pending_digital",
+      referenceNo: "GC-PENDING-ACCEPTANCE",
+      paidAt: null
+    },
+    createdAt: "2026-11-04T02:10:00Z"
   }
 ];

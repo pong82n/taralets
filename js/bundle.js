@@ -549,6 +549,43 @@
         paidAt: null
       },
       createdAt: "2026-11-04T01:25:00Z"
+    },
+    {
+      id: "bk-103",
+      tripId: "trip-01",
+      driverId: "drv-01",
+      driverName: "Engr. Marco Reyes",
+      driverPhone: "0917-555-8821",
+      vehicleType: "car",
+      vehicleModel: "Toyota Vios 1.5G (NCA 4819)",
+      passengerId: "pax-01",
+      passengerName: "Paulo Gomez",
+      passengerPhone: "0917-111-2290",
+      passengerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
+      workplaceName: "Shopee Philippines (W City Center BGC)",
+      pickupPoint: "Commonwealth Market / Don Antonio, QC",
+      destinationPoint: "W City Center, 7th Ave, BGC",
+      scheduledTime: "06:45 AM",
+      fare: 150,
+      status: "pending_verification",
+      initiatedBy: "passenger",
+      passengerVerification: {
+        companyName: "Shopee Philippines",
+        companyEmail: "paulo.gomez@shopee.com",
+        employeeIdBadge: "VERIFIED_CORP_BADGE_#SHP-8812",
+        workplaceId: "hub-bgc",
+        workSchedule: "08:00 AM - 05:00 PM",
+        pickupAddress: "Commonwealth Market footbridge, QC",
+        note: "Hi Engr. Marco! I work at W City Center BGC just 2 blocks from Net Park. Quiet commuter with verified Shopee employee ID. Requesting seat 2!"
+      },
+      payment: {
+        modeId: "gcash",
+        modeName: "GCash",
+        status: "pending_digital",
+        referenceNo: "GC-PENDING-ACCEPTANCE",
+        paidAt: null
+      },
+      createdAt: "2026-11-04T02:10:00Z"
     }
   ];
 
@@ -807,6 +844,122 @@
 
       window.dispatchEvent(new CustomEvent('taralets:booking-created', { detail: newBooking }));
       return newBooking;
+    }
+
+    createPassengerBookingRequest({ tripId, passengerId, pickupPoint, paymentModeId = 'gcash', passengerNote }) {
+      const trips = this.getTrips();
+      const trip = trips.find(t => t.id === tripId);
+      if (!trip) throw new Error("Trip not found");
+
+      if (trip.bookedSeats >= trip.totalSeats) {
+        throw new Error(`Trip is already full! (${trip.totalSeats}/${trip.totalSeats})`);
+      }
+
+      const passenger = this.getPassengers().find(p => p.id === passengerId) || this.getCurrentPassenger();
+      const driver = this.getDrivers().find(d => d.id === trip.driverId);
+      const mode = this.getPaymentModeById(paymentModeId);
+
+      const bookingId = "bk-" + Date.now();
+      const newBooking = {
+        id: bookingId,
+        tripId: trip.id,
+        driverId: trip.driverId,
+        driverName: trip.driverName,
+        driverPhone: driver ? driver.phone : "0917-555-0000",
+        vehicleType: trip.vehicleType,
+        vehicleModel: trip.vehicleModel + (trip.plate ? ` (${trip.plate})` : ''),
+        passengerId: passenger.id,
+        passengerName: passenger.name,
+        passengerPhone: passenger.phone,
+        passengerAvatar: passenger.avatar,
+        workplaceName: passenger.company || trip.destinationName,
+        pickupPoint: pickupPoint || passenger.pickupLocation,
+        destinationPoint: trip.destinationName,
+        scheduledTime: trip.departureTime,
+        fare: trip.farePerSeat,
+        status: "pending_verification",
+        initiatedBy: "passenger",
+        passengerVerification: {
+          companyName: passenger.company,
+          companyEmail: `${passenger.name.toLowerCase().replace(/[^a-z]/g, '.')}@${passenger.company.toLowerCase().includes('google') ? 'google.com' : passenger.company.toLowerCase().includes('shopee') ? 'shopee.com' : 'corp.ph'}`,
+          employeeIdBadge: `VERIFIED_EMPLOYEE_#${passenger.id.toUpperCase()}`,
+          workplaceId: passenger.workplaceId,
+          workSchedule: passenger.workSchedule || '08:00 AM - 05:00 PM',
+          pickupAddress: pickupPoint || passenger.pickupLocation,
+          note: passengerNote || "Commuting to our workplace. I have my company ID and exact fare ready!"
+        },
+        payment: {
+          modeId: mode.id,
+          modeName: mode.name,
+          amount: trip.farePerSeat,
+          status: "pending_digital",
+          referenceNo: "AWAITING_DRIVER_VERIFICATION",
+          paidAt: null
+        },
+        createdAt: new Date().toISOString()
+      };
+
+      const bookings = this.getBookings();
+      bookings.unshift(newBooking);
+      localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
+
+      window.dispatchEvent(new CustomEvent('taralets:booking-requested', { detail: newBooking }));
+      return newBooking;
+    }
+
+    acceptPassengerBooking(bookingId) {
+      const bookings = this.getBookings();
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) throw new Error("Booking request not found");
+
+      const trip = this.getTripById(booking.tripId);
+      if (!trip) throw new Error("Trip not found");
+
+      if (trip.bookedSeats >= trip.totalSeats) {
+        throw new Error(`Vehicle has reached full capacity (${trip.totalSeats}/${trip.totalSeats})!`);
+      }
+
+      booking.status = "confirmed";
+      booking.driverVerifiedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
+
+      trip.bookedSeats = (trip.bookedSeats || 0) + 1;
+      if (!trip.bookedPassengerIds) trip.bookedPassengerIds = [];
+      if (!trip.bookedPassengerIds.includes(booking.passengerId)) {
+        trip.bookedPassengerIds.push(booking.passengerId);
+      }
+      this.updateTrip(trip);
+
+      const passenger = this.getPassengers().find(p => p.id === booking.passengerId);
+      if (passenger) {
+        passenger.status = 'booked';
+        this.savePassenger(passenger);
+      }
+
+      this.addMessage({
+        bookingId: booking.id,
+        sender: "driver",
+        senderName: booking.driverName,
+        text: `Hello ${booking.passengerName}! I have reviewed and verified your workplace details (${booking.passengerVerification?.companyName || 'Verified Co-Worker'}). Your booking is ACCEPTED! See you at ${booking.pickupPoint} at ${booking.scheduledTime}.`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+
+      window.dispatchEvent(new CustomEvent('taralets:booking-accepted', { detail: booking }));
+      return booking;
+    }
+
+    declinePassengerBooking(bookingId, reason = "Capacity or route conflict") {
+      const bookings = this.getBookings();
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) return null;
+
+      booking.status = "declined";
+      booking.declineReason = reason;
+      booking.updatedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
+
+      window.dispatchEvent(new CustomEvent('taralets:booking-declined', { detail: booking }));
+      return booking;
     }
 
     updateBookingStatus(bookingId, status) {
