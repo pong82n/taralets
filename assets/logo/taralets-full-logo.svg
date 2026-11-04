@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="full-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022c22"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+
+    <linearGradient id="full-mint" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <linearGradient id="full-cyan" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+
+    <linearGradient id="full-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+
+    <filter id="full-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- ICON BADGE (Left) -->
+  <g transform="translate(16, 16)">
+    <!-- Squircle Background -->
+    <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#full-bg-grad)" filter="url(#full-shadow)"/>
+    
+    <!-- Outer rim -->
+    <rect x="1" y="1" width="126" height="126" rx="27" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+
+    <!-- Dynamic Highway Arc -->
+    <path d="M30 96 C 36 68, 54 52, 92 42" 
+          fill="none" 
+          stroke="url(#full-cyan)" 
+          stroke-width="8" 
+          stroke-linecap="round" 
+          opacity="0.9"/>
+
+    <!-- 'T' Top Bar -->
+    <path d="M28 36 C 28 32, 32 29, 36 29 L 92 29 C 96 29, 100 32, 100 36 C 100 39, 97 42, 93 42 L 35 42 C 31 42, 28 39, 28 36 Z" 
+          fill="url(#full-mint)"/>
+
+    <!-- 'T' Down Stem & Arrow -->
+    <path d="M64 42 L 64 88 L 80 72 C 82 70, 85 70, 87 72 C 89 74, 89 77, 87 79 L 66 100 C 65 101, 63 101, 62 100 L 41 79 C 39 77, 39 74, 41 72 C 43 70, 46 70, 48 72 L 64 88 Z" 
+          fill="url(#full-mint)"/>
+
+    <!-- Driver Dot (Cyan) -->
+    <circle cx="40" cy="62" r="7" fill="url(#full-cyan)"/>
+    <circle cx="40" cy="62" r="3.5" fill="#ffffff"/>
+
+    <!-- Passenger Dot (Gold) -->
+    <circle cx="88" cy="62" r="7" fill="url(#full-gold)"/>
+    <circle cx="88" cy="62" r="3.5" fill="#ffffff"/>
+
+    <!-- Connection Dash -->
+    <line x1="47" y1="62" x2="81" y2="62" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 5"/>
+  </g>
+
+  <!-- LOGO TYPOGRAPHY (Right) -->
+  <g transform="translate(164, 40)">
+    
+    <!-- TaraLets Wordmark -->
+    <text x="0" y="52" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="52" font-weight="900" letter-spacing="-1.5">
+      <tspan fill="#0f172a">Tara</tspan>
+      <tspan fill="#059669">Lets</tspan>
+    </text>
+
+    <!-- Sub-tag Pill & Details -->
+    <g transform="translate(2, 68)">
+      <!-- Pill background -->
+      <rect x="0" y="0" width="138" height="24" rx="12" fill="#ecfdf5"/>
+      <text x="12" y="16" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="11" font-weight="800" fill="#047857" letter-spacing="1.2">
+        WORK COMMUTE
+      </text>
+
+      <text x="150" y="16" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="12" font-weight="600" fill="#64748b">
+        Driver-Booked Workplace Rides
+      </text>
+    </g>
+
+    <!-- Vehicle Mode Icons -->
+    <g transform="translate(390, 24)" opacity="0.85">
+      <!-- Car icon badge -->
+      <rect x="0" y="0" width="30" height="30" rx="8" fill="#e0f2fe"/>
+      <text x="7" y="21" font-size="16">🚗</text>
+
+      <!-- Bike icon badge -->
+      <rect x="36" y="0" width="30" height="30" rx="8" fill="#dcfce7"/>
+      <text x="43" y="21" font-size="16">🏍️</text>
+    </g>
+
+  </g>
+</svg>
