@@ -6,6 +6,8 @@ body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   background-color: #f8fafc;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
 /* Custom scrollbars */
@@ -48,9 +50,17 @@ body {
 
 /* Glassmorphism accents */
 .glass-header {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Glass bottom app bar */
+.glass-bottom-bar {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 -4px 20px -2px rgba(15, 23, 42, 0.08);
 }
 
 /* Badge glows */
@@ -66,4 +76,47 @@ body {
 
 .animate-pulse-subtle {
   animation: pulseSubtle 3s infinite ease-in-out;
+}
+
+/* ======================================================== */
+/* MOBILE & TABLET RESPONSIVE ENHANCEMENTS                  */
+/* ======================================================== */
+
+/* Safe area insets for mobile & tablet notches (iPhone, iPad, Android) */
+.safe-pb {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4.5rem);
+}
+
+.safe-bottom-nav {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+}
+
+/* Smooth mobile touch scrolling */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Mobile Bottom Sheet Modal Behavior on small screens (< 640px) */
+@media (max-width: 639px) {
+  .modal-mobile-sheet {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .modal-mobile-sheet > div {
+    max-height: 88vh !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}
+
+/* Tablet (iPad, Android Tablets, 640px - 1024px) Layout Refinements */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .tablet-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
 }

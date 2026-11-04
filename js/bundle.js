@@ -1,6 +1,6 @@
 ﻿/**
  * TaraLets - Standalone Application Bundle
- * Complete Ridesharing Platform with Driver Verification & Modes of Payment
+ * Complete Ridesharing Platform with Driver Verification, Modes of Payment, and Mobile/Tablet Support
  */
 (function() {
   'use strict';
@@ -1883,7 +1883,33 @@ class TaraLetsApp {
       }
     }
 
+    const mobileIcon = document.getElementById('mobile-tab-role-icon');
+    const mobileLabel = document.getElementById('mobile-tab-role-label');
+    if (mobileIcon && mobileLabel) {
+      if (isDriver) {
+        mobileIcon.textContent = '🚶';
+        mobileLabel.textContent = 'Switch to Commuter';
+      } else {
+        mobileIcon.textContent = '🚗';
+        mobileLabel.textContent = 'Switch to Driver';
+      }
+    }
+
     this.mapManager.invalidateSize();
+  }
+
+  toggleRole() {
+    const currentRole = storage.getActiveRole();
+    const newRole = currentRole === 'driver' ? 'passenger' : 'driver';
+    storage.setActiveRole(newRole);
+    this.showToast(`Switched to ${newRole === 'driver' ? '🚗 Driver' : '🚶 Commuter'} Mode!`, 'info');
+  }
+
+  scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   render() {

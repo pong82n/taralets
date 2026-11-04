@@ -1,0 +1,48 @@
+{
+  "name": "TaraLets Commute - Workplace Carpool & Rideshare",
+  "short_name": "TaraLets",
+  "description": "Philippine workplace carpool and motorcycle ridesharing platform where drivers and co-workers share the commute to work.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#064e3b",
+  "theme_color": "#059669",
+  "orientation": "any",
+  "categories": ["travel", "transportation", "productivity"],
+  "icons": [
+    {
+      "src": "assets/logo/taralets-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/logo/app-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/logo/app-icon-3d.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Driver Mode",
+      "url": "/?role=driver",
+      "description": "Post routes and verify co-riders"
+    },
+    {
+      "name": "Commuter Mode",
+      "url": "/?role=passenger",
+      "description": "Book a seat on a co-worker route"
+    },
+    {
+      "name": "Payment Center",
+      "url": "/?action=wallet",
+      "description": "Manage GCash, Maya, and Commute Wallet"
+    }
+  ]
+}

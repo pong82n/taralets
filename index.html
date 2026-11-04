@@ -2,11 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>TaraLets Commute | Driver-Booked Workplace Carpool & Moto-pooling</title>
   
-  <!-- Favicon -->
+  <!-- Mobile & Tablet PWA Meta Tags -->
+  <meta name="theme-color" content="#059669">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TaraLets">
+  <meta name="application-name" content="TaraLets">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- Favicon & PWA Icons -->
   <link rel="icon" type="image/svg+xml" href="assets/logo/favicon.svg">
+  <link rel="apple-touch-icon" href="assets/logo/taralets-icon.svg">
+  <link rel="manifest" href="manifest.json">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -119,7 +130,7 @@
   </section>
 
   <!-- ================= MAIN CONTENT WRAPPER ================= -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 pb-28 lg:pb-12 safe-pb">
 
     <!-- ======================================================= -->
     <!-- DRIVER DASHBOARD VIEW (PRIMARY)                        -->
@@ -168,7 +179,7 @@
 
         <!-- Column 1: Driver's Commute Trips (4 cols) -->
         <div class="lg:col-span-4 space-y-4">
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <div id="trips-radar-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between mb-3">
               <h2 class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
                 <span>🚗</span>
@@ -210,7 +221,7 @@
 
         <!-- Column 3: Interactive Route & Pickup Map (3 cols) -->
         <div class="lg:col-span-3 space-y-4">
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <div id="commute-map-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between mb-2">
               <h3 class="font-bold text-xs text-slate-900 flex items-center gap-1">
                 <span>🗺️</span>
@@ -219,7 +230,7 @@
               <span class="text-[10px] text-slate-400">Leaflet / OpenStreetMap</span>
             </div>
 
-            <div id="commute-map" class="w-full h-80 rounded-xl border border-slate-200 overflow-hidden shadow-inner z-0">
+            <div id="commute-map" class="w-full h-72 sm:h-80 md:h-96 lg:h-[420px] rounded-xl border border-slate-200 overflow-hidden shadow-inner z-0">
               <!-- Leaflet Map Container -->
             </div>
 
@@ -334,11 +345,11 @@
   <!-- ======================================================= -->
   <!-- MODAL 1: DRIVER CONFIRM BOOKING (CORE USER WORKFLOW)    -->
   <!-- ======================================================= -->
-  <div id="modal-driver-booking" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+  <div id="modal-driver-booking" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[92vh] flex flex-col transform transition-all">
       
       <!-- Modal Header -->
-      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex items-center justify-between">
+      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex items-center justify-between shrink-0">
         <div>
           <span class="text-[10px] uppercase tracking-wider font-extrabold bg-white/20 px-2 py-0.5 rounded-full">
             Driver-Initiated Booking
@@ -351,7 +362,7 @@
       </div>
 
       <!-- Modal Body -->
-      <form id="form-confirm-booking" class="p-5 space-y-4">
+      <form id="form-confirm-booking" class="p-4 sm:p-5 space-y-4 overflow-y-auto touch-scroll">
         
         <!-- Passenger Profile Snippet -->
         <div class="flex items-start gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
@@ -429,10 +440,10 @@
   <!-- ======================================================= -->
   <!-- MODAL 2: POST NEW COMMUTE TRIP (CAR OR MOTORCYCLE)      -->
   <!-- ======================================================= -->
-  <div id="modal-post-trip" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+  <div id="modal-post-trip" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[92vh] flex flex-col transform transition-all">
       
-      <div class="bg-slate-900 p-4 text-white flex items-center justify-between">
+      <div class="bg-slate-900 p-4 text-white flex items-center justify-between shrink-0">
         <div>
           <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">
             Commute Route Creator
@@ -444,7 +455,7 @@
         </button>
       </div>
 
-      <form id="form-post-trip" class="p-5 space-y-4 text-xs">
+      <form id="form-post-trip" class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto touch-scroll">
         
         <!-- Vehicle Type Radio Choice -->
         <div>
@@ -561,10 +572,10 @@
   <!-- ======================================================= -->
   <!-- MODAL 3: ADD COMMUTER REQUEST PROFILE                   -->
   <!-- ======================================================= -->
-  <div id="modal-add-commuter" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+  <div id="modal-add-commuter" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[92vh] flex flex-col transform transition-all">
       
-      <div class="bg-blue-600 p-4 text-white flex items-center justify-between">
+      <div class="bg-blue-600 p-4 text-white flex items-center justify-between shrink-0">
         <div>
           <span class="text-[10px] uppercase tracking-wider font-extrabold bg-white/20 px-2 py-0.5 rounded-full">
             Passenger Profile
@@ -576,7 +587,7 @@
         </button>
       </div>
 
-      <form id="form-add-commuter" class="p-5 space-y-4 text-xs">
+      <form id="form-add-commuter" class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto touch-scroll">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Full Name</label>
           <input type="text" id="commuter-name" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="e.g. Juan dela Cruz" required>
@@ -979,10 +990,10 @@
   <!-- ======================================================= -->
   <!-- MODAL 8: PASSENGER REQUEST TO BOOK SEAT ON DRIVER ROUTE -->
   <!-- ======================================================= -->
-  <div id="modal-passenger-request-seat" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+  <div id="modal-passenger-request-seat" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[92vh] flex flex-col transform transition-all">
       
-      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white flex items-center justify-between">
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white flex items-center justify-between shrink-0">
         <div>
           <span class="text-[10px] uppercase tracking-wider font-extrabold bg-white/20 px-2 py-0.5 rounded-full">
             Commuter Booking Request
@@ -994,7 +1005,7 @@
         </button>
       </div>
 
-      <form id="form-passenger-request-seat" class="p-5 space-y-4 text-xs">
+      <form id="form-passenger-request-seat" class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto touch-scroll">
         
         <!-- Trip Info Card -->
         <div class="bg-blue-50/60 p-3.5 rounded-xl border border-blue-200 flex items-start justify-between">
@@ -1068,10 +1079,10 @@
   <!-- ======================================================= -->
   <!-- MODAL 9: DRIVER VERIFICATION & ACCEPTANCE INSPECTOR     -->
   <!-- ======================================================= -->
-  <div id="modal-verify-passenger" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+  <div id="modal-verify-passenger" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[92vh] flex flex-col transform transition-all">
       
-      <div class="bg-gradient-to-r from-emerald-800 to-teal-900 p-4 text-white flex items-center justify-between">
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-900 p-4 text-white flex items-center justify-between shrink-0">
         <div class="flex items-center gap-2">
           <span class="text-xl">🛡️</span>
           <div>
@@ -1086,7 +1097,7 @@
         </button>
       </div>
 
-      <div class="p-5 space-y-4 text-xs">
+      <div class="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto touch-scroll">
         
         <!-- Passenger Profile Header -->
         <div class="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -1164,12 +1175,62 @@
     </div>
   </div>
 
+  <!-- ================= MOBILE & TABLET BOTTOM APP BAR ================= -->
+  <nav class="glass-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 px-2 py-1 safe-bottom-nav lg:hidden">
+    <div class="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
+      
+      <!-- Role Toggle Tab -->
+      <button id="mobile-tab-role" onclick="window.taraletsApp.toggleRole()" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Toggle Driver or Commuter Mode">
+        <span class="text-xl leading-none" id="mobile-tab-role-icon">🚗</span>
+        <span class="text-[9px] font-extrabold mt-1 tracking-tight truncate max-w-full" id="mobile-tab-role-label">Mode</span>
+      </button>
+
+      <!-- Live Map Tab -->
+      <button onclick="window.taraletsApp.scrollToSection('commute-map-card')" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Jump to Map">
+        <span class="text-xl leading-none">🗺️</span>
+        <span class="text-[9px] font-extrabold mt-1 tracking-tight">Live Map</span>
+      </button>
+
+      <!-- Trips / Matching Radar Tab -->
+      <button onclick="window.taraletsApp.scrollToSection('trips-radar-card')" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="View Trips & Routes">
+        <span class="text-xl leading-none">📋</span>
+        <span class="text-[9px] font-extrabold mt-1 tracking-tight">Trips</span>
+      </button>
+
+      <!-- Commute Wallet & Pay Tab -->
+      <button onclick="window.taraletsApp.openPaymentCenterModal()" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Open Payment Center & Wallet">
+        <span class="text-xl leading-none">👛</span>
+        <span class="text-[9px] font-extrabold mt-1 tracking-tight">Wallet</span>
+      </button>
+
+      <!-- Mobile Apps QR Tab -->
+      <button onclick="window.taraletsApp.openAppDownloadModal()" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Install Mobile Apps">
+        <span class="text-xl leading-none">📱</span>
+        <span class="text-[9px] font-extrabold mt-1 tracking-tight">Get Apps</span>
+      </button>
+
+    </div>
+  </nav>
+
   <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
+  <div id="toast-container" class="fixed bottom-16 lg:bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
     <!-- Toasts inserted dynamically -->
   </div>
 
   <!-- Standalone Script for zero-configuration offline & local file:// support -->
   <script src="js/bundle.js"></script>
+
+  <!-- Progressive Web App (PWA) Mobile/Tablet Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then((reg) => {
+          console.log('TaraLets PWA active on mobile/tablet:', reg.scope);
+        }).catch((err) => {
+          console.warn('TaraLets PWA registration notice:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
