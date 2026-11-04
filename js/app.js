@@ -17,10 +17,60 @@ class TaraLetsApp {
   }
 
   init() {
+    this.handleUrlParams();
     this.setupEventListeners();
     this.mapManager.init();
     this.syncActiveRoleUI();
     this.render();
+  }
+
+  handleUrlParams() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get('role');
+      const actionParam = params.get('action');
+
+      if (roleParam === 'driver' || roleParam === 'passenger') {
+        storage.setActiveRole(roleParam);
+      }
+
+      if (actionParam === 'wallet') {
+        setTimeout(() => this.openPaymentCenterModal(), 400);
+      } else if (actionParam === 'install' || actionParam === 'qr') {
+        setTimeout(() => this.openAppDownloadModal(), 400);
+      }
+    } catch (e) {
+      console.warn('URL param parse notice:', e);
+    }
+  }
+
+  copyTextToClipboard(text, successMsg = 'Copied to clipboard!') {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.showToast(successMsg, 'success');
+      }).catch(() => {
+        this.fallbackCopyText(text, successMsg);
+      });
+    } else {
+      this.fallbackCopyText(text, successMsg);
+    }
+  }
+
+  fallbackCopyText(text, successMsg) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand('copy');
+      this.showToast(successMsg, 'success');
+    } catch (err) {
+      this.showToast('Link: ' + text, 'info');
+    }
+    document.body.removeChild(ta);
   }
 
   setupEventListeners() {

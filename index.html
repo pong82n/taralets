@@ -942,8 +942,19 @@
             <h4 class="font-extrabold text-slate-900 text-sm">TaraLets Driver Edition</h4>
             <p class="text-[11px] text-slate-500 mt-0.5">Car &amp; Motorcycle Commute Drivers</p>
             
-            <div class="my-4 w-48 h-48 bg-white p-2 rounded-2xl border border-slate-200 shadow-md">
-              <img src="assets/qr/qr-driver-app.svg" alt="TaraLets Driver App QR" class="w-full h-full object-contain">
+            <div class="my-4 w-52 h-52 bg-white p-3 rounded-2xl border-2 border-emerald-200 shadow-md flex items-center justify-center">
+              <img src="assets/qr/qr-driver-app.svg" alt="TaraLets Driver App QR Code" class="w-full h-full object-contain">
+            </div>
+
+            <p class="text-[10px] text-emerald-800 font-bold mb-2">
+              📱 Point phone camera to scan &amp; install
+            </p>
+
+            <div class="w-full flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-emerald-200 text-[10px] text-slate-600 mb-3 shadow-2xs">
+              <span class="truncate font-mono font-medium text-emerald-900">.../?role=driver</span>
+              <button type="button" onclick="window.taraletsApp.copyTextToClipboard('https://taralets-tawny.vercel.app/?role=driver', 'Driver App link copied!')" class="ml-2 px-2 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold rounded-md transition shrink-0">
+                Copy Link
+              </button>
             </div>
 
             <ul class="text-[11px] text-slate-600 text-left space-y-1 mb-4 w-full bg-white p-3 rounded-xl border border-slate-100">
@@ -953,9 +964,14 @@
               <li class="flex items-center gap-1.5"><span>✓</span> Payouts via GCash, Maya &amp; Bank QR</li>
             </ul>
 
-            <button onclick="window.taraletsApp.openRoleSimulator('driver')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
-              Launch Driver App Mode 🚗
-            </button>
+            <div class="w-full space-y-2">
+              <a href="https://taralets-tawny.vercel.app/?role=driver" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition block text-center">
+                🚀 Open Driver App Mode
+              </a>
+              <button onclick="window.taraletsApp.openRoleSimulator('driver')" class="w-full py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[11px] rounded-xl border border-slate-200 transition">
+                Switch Current Tab to Driver
+              </button>
+            </div>
           </div>
 
           <!-- PASSENGER / CO-RIDER APP QR CARD -->
@@ -966,8 +982,19 @@
             <h4 class="font-extrabold text-slate-900 text-sm">TaraLets Passenger Edition</h4>
             <p class="text-[11px] text-slate-500 mt-0.5">Colleagues &amp; Office Workers</p>
             
-            <div class="my-4 w-48 h-48 bg-white p-2 rounded-2xl border border-slate-200 shadow-md">
-              <img src="assets/qr/qr-passenger-app.svg" alt="TaraLets Passenger App QR" class="w-full h-full object-contain">
+            <div class="my-4 w-52 h-52 bg-white p-3 rounded-2xl border-2 border-blue-200 shadow-md flex items-center justify-center">
+              <img src="assets/qr/qr-passenger-app.svg" alt="TaraLets Passenger App QR Code" class="w-full h-full object-contain">
+            </div>
+
+            <p class="text-[10px] text-blue-800 font-bold mb-2">
+              📱 Point phone camera to scan &amp; install
+            </p>
+
+            <div class="w-full flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-blue-200 text-[10px] text-slate-600 mb-3 shadow-2xs">
+              <span class="truncate font-mono font-medium text-blue-900">.../?role=passenger</span>
+              <button type="button" onclick="window.taraletsApp.copyTextToClipboard('https://taralets-tawny.vercel.app/?role=passenger', 'Passenger App link copied!')" class="ml-2 px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-md transition shrink-0">
+                Copy Link
+              </button>
             </div>
 
             <ul class="text-[11px] text-slate-600 text-left space-y-1 mb-4 w-full bg-white p-3 rounded-xl border border-slate-100">
@@ -977,9 +1004,14 @@
               <li class="flex items-center gap-1.5"><span>✓</span> In-app coordination &amp; contactless payments</li>
             </ul>
 
-            <button onclick="window.taraletsApp.openRoleSimulator('passenger')" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
-              Launch Commuter App Mode 🚶
-            </button>
+            <div class="w-full space-y-2">
+              <a href="https://taralets-tawny.vercel.app/?role=passenger" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition block text-center">
+                🚀 Open Commuter App Mode
+              </a>
+              <button onclick="window.taraletsApp.openRoleSimulator('passenger')" class="w-full py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[11px] rounded-xl border border-slate-200 transition">
+                Switch Current Tab to Commuter
+              </button>
+            </div>
           </div>
 
         </div>
