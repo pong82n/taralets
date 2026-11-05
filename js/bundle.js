@@ -1553,10 +1553,27 @@ class CommuteMapManager {
       this.map.remove();
     }
 
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
     this.map = L.map(this.containerId, {
       zoomControl: true,
-      attributionControl: false
+      attributionControl: false,
+      scrollWheelZoom: false,
+      tap: false
     }).setView(this.defaultCenter, this.defaultZoom);
+
+    // On touch devices, allow window scrolling over map; tapping map activates drag
+    if (isTouchDevice && this.map.dragging) {
+      this.map.dragging.disable();
+      const container = document.getElementById(this.containerId);
+      if (container) {
+        container.addEventListener('click', () => {
+          if (this.map && this.map.dragging && !this.map.dragging.enabled()) {
+            this.map.dragging.enable();
+          }
+        }, { passive: true });
+      }
+    }
 
     // High quality modern tile layer (CartoDB Positron / OSM)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -1939,8 +1956,13 @@ class TaraLetsApp {
         setTimeout(() => this.openPassengerLoginModal(), 400);
       } else if (actionParam === 'wallet') {
         setTimeout(() => this.openPaymentCenterModal(), 400);
-      } else if (actionParam === 'install' || actionParam === 'qr') {
-        setTimeout(() => this.openAppDownloadModal(), 400);
+      } else if (actionParam === 'install' || actionParam === 'qr' || actionParam === 'pwa') {
+        setTimeout(() => {
+          this.openAppDownloadModal();
+          if (actionParam === 'install' || actionParam === 'pwa') {
+            this.installPwaApp(roleParam || 'passenger');
+          }
+        }, 500);
       }
     } catch (e) {
       console.warn('URL param parse notice:', e);
@@ -2107,6 +2129,18 @@ class TaraLetsApp {
       this.showToast(`Logged out of Commuter Mode. You can log in or sign up anytime.`, "info");
       this.syncActiveRoleUI();
       this.render();
+    });
+
+    // PWA Mobile App Installation Listeners
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+      console.log('TaraLets PWA beforeinstallprompt captured');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      window.deferredInstallPrompt = null;
+      this.showToast("🎉 TaraLets Mobile App is installed on your Home Screen!", "success");
     });
 
     window.addEventListener('taralets:role-changed', () => {
@@ -3711,6 +3745,65 @@ class TaraLetsApp {
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     }
+  }
+
+  installPwaApp(edition = 'passenger') {
+    if (edition === 'driver') {
+      storage.setCommuterOnlyMode(false);
+      storage.setActiveRole('driver');
+    } else if (edition === 'passenger') {
+      storage.setCommuterOnlyMode(true);
+      storage.setActiveRole('passenger');
+    }
+    this.syncActiveRoleUI();
+    this.render();
+
+    // 1. Check if already running in standalone PWA mode
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
+      this.showToast(`✓ TaraLets is already installed and running as a standalone app!`, "success");
+      const modal = document.getElementById('modal-app-download');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+      return;
+    }
+
+    // 2. Check if browser prompt is available (Android, Chrome, Edge)
+    if (window.deferredInstallPrompt) {
+      window.deferredInstallPrompt.prompt();
+      window.deferredInstallPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          this.showToast("🎉 Installing TaraLets to your device Home Screen!", "success");
+          window.deferredInstallPrompt = null;
+          const modal = document.getElementById('modal-app-download');
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+        } else {
+          this.showToast("App installation dismissed. You can install anytime!", "info");
+        }
+      }).catch((err) => {
+        console.warn('Install prompt notice:', err);
+      });
+      return;
+    }
+
+    // 3. Check if iOS device (iPhone / iPad Safari)
+    const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    if (isIos) {
+      const iosGuide = document.getElementById('pwa-ios-guide');
+      if (iosGuide) iosGuide.classList.remove('hidden');
+      this.showToast("📱 On iPhone/iPad: Tap the Safari Share button (⎋) and choose 'Add to Home Screen'!", "info");
+      return;
+    }
+
+    // 4. Fallback instruction for browser menu
+    this.showToast(`📱 To install on this device: Open your browser menu (⋮) and tap "Install app" or "Add to Home screen"!`, "info");
+    const iosGuide = document.getElementById('pwa-ios-guide');
+    if (iosGuide) iosGuide.classList.remove('hidden');
   }
 
   openRoleSimulator(role) {

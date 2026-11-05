@@ -1,8 +1,10 @@
 {
+  "id": "taralets-commute-app",
   "name": "TaraLets Commute - Workplace Carpool & Rideshare",
   "short_name": "TaraLets",
   "description": "Philippine workplace carpool and motorcycle ridesharing platform where drivers and co-workers share the commute to work.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#064e3b",
   "theme_color": "#059669",
@@ -10,22 +12,28 @@
   "categories": ["travel", "transportation", "productivity"],
   "icons": [
     {
-      "src": "assets/logo/taralets-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/logo/app-icon.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
+      "src": "assets/logo/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/logo/app-icon-3d.jpg",
+      "src": "assets/logo/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/logo/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "assets/logo/taralets-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "shortcuts": [

@@ -2,13 +2,16 @@
  * TaraLets Service Worker for Mobile & Tablet PWA Support
  */
 
-const CACHE_NAME = 'taralets-cache-v1';
+const CACHE_NAME = 'taralets-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/css/styles.css',
   '/js/bundle.js',
   '/manifest.json',
+  '/assets/logo/icon-192.png',
+  '/assets/logo/icon-512.png',
+  '/assets/logo/icon-maskable-512.png',
   '/assets/logo/taralets-icon.svg',
   '/assets/logo/taralets-full-logo.svg',
   '/assets/logo/favicon.svg',

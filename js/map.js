@@ -21,10 +21,27 @@ export class CommuteMapManager {
       this.map.remove();
     }
 
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
     this.map = L.map(this.containerId, {
       zoomControl: true,
-      attributionControl: false
+      attributionControl: false,
+      scrollWheelZoom: false,
+      tap: false
     }).setView(this.defaultCenter, this.defaultZoom);
+
+    // On touch devices, allow window scrolling over map; tapping map activates drag
+    if (isTouchDevice && this.map.dragging) {
+      this.map.dragging.disable();
+      const container = document.getElementById(this.containerId);
+      if (container) {
+        container.addEventListener('click', () => {
+          if (this.map && this.map.dragging && !this.map.dragging.enabled()) {
+            this.map.dragging.enable();
+          }
+        }, { passive: true });
+      }
+    }
 
     // High quality modern tile layer (CartoDB Positron / OSM)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {

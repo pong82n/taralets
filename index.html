@@ -965,28 +965,82 @@
   </div>
 
   <!-- ======================================================= -->
-  <!-- MODAL 7: MOBILE APPS INSTALLATION QR CODES              -->
+  <!-- MODAL 7: MOBILE APPS INSTALLATION (PWA & QR CODES)        -->
   <!-- ======================================================= -->
-  <div id="modal-app-download" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-h-[90vh]">
+  <div id="modal-app-download" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden max-h-[92vh]">
       
       <!-- Header -->
-      <div class="bg-slate-900 p-5 text-white flex items-center justify-between">
-        <div>
-          <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">
-            Official Mobile Applications
-          </span>
-          <h3 class="font-extrabold text-base mt-0.5">Scan QR Code to Install Mobile Apps</h3>
+      <div class="bg-slate-900 p-4 sm:p-5 text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            📱
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                Official Mobile Apps (PWA)
+              </span>
+            </div>
+            <h3 class="font-extrabold text-base mt-0.5">Install TaraLets Mobile Apps</h3>
+            <p class="text-xs text-slate-300">Fast install to your phone's Home Screen with offline support</p>
+          </div>
         </div>
         <button data-close-modal="modal-app-download" class="text-white/80 hover:text-white p-1 rounded-lg">
           ✕
         </button>
       </div>
 
-      <div class="p-6 overflow-y-auto space-y-6">
-        <p class="text-xs text-slate-500 text-center">
-          TaraLets is designed with dedicated experiences for vehicle owners and commuters. Scan the respective QR code with your mobile camera or tap to launch.
-        </p>
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs touch-scroll">
+        
+        <!-- DIRECT 1-TAP INSTALLATION BANNER (For Mobile Phone / Tablet / Desktop) -->
+        <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 p-4 sm:p-5 rounded-2xl border border-emerald-500/40 text-white shadow-lg">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+            <div class="flex items-center gap-3">
+              <img src="assets/logo/icon-192.png" alt="TaraLets App" class="w-12 h-12 rounded-2xl shadow-md border border-emerald-400/30 shrink-0">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="font-extrabold text-sm sm:text-base">Install App on This Device</h4>
+                  <span class="text-[9px] uppercase font-bold bg-emerald-500 text-emerald-950 px-2 py-0.5 rounded-full">Instant Install</span>
+                </div>
+                <p class="text-[11px] text-emerald-200 mt-0.5">Add to your Home Screen — launches like a native app!</p>
+              </div>
+            </div>
+            <span class="text-[10px] text-emerald-300 font-semibold bg-emerald-900/60 px-2.5 py-1 rounded-lg border border-emerald-700/50 shrink-0">
+              ⚡ No App Store Required
+            </span>
+          </div>
+
+          <!-- Direct Install Action Buttons -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button type="button" onclick="window.taraletsApp.installPwaApp('passenger')" class="w-full py-2.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <span>🚶</span>
+              <span>Install Commuter App Mode</span>
+            </button>
+            <button type="button" onclick="window.taraletsApp.installPwaApp('driver')" class="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <span>🚗</span>
+              <span>Install Driver App Mode</span>
+            </button>
+          </div>
+
+          <!-- iOS Safari Instructions Banner -->
+          <div id="pwa-ios-guide" class="mt-3 pt-3 border-t border-emerald-800/60 text-[11px] text-emerald-100">
+            <div class="font-bold flex items-center gap-1.5 text-emerald-300 mb-1">
+              <span>🍏</span>
+              <span>iPhone &amp; iPad (Safari) Quick Install:</span>
+            </div>
+            <p class="text-slate-300">
+              Tap the Safari <strong>Share</strong> icon (square with arrow ↑) and select <strong>"Add to Home Screen"</strong> (➕) to install TaraLets on your iPhone or iPad!
+            </p>
+          </div>
+        </div>
+
+        <!-- DIVIDER -->
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Or Scan QR from Another Phone</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           
@@ -998,7 +1052,7 @@
             <h4 class="font-extrabold text-slate-900 text-sm">TaraLets Driver Edition</h4>
             <p class="text-[11px] text-slate-500 mt-0.5">Car &amp; Motorcycle Commute Drivers</p>
             
-            <div class="my-4 w-52 h-52 bg-white p-3 rounded-2xl border-2 border-emerald-200 shadow-md flex items-center justify-center">
+            <div class="my-4 w-48 h-48 sm:w-52 sm:h-52 bg-white p-3 rounded-2xl border-2 border-emerald-200 shadow-md flex items-center justify-center">
               <img src="assets/qr/qr-driver-app.svg" alt="TaraLets Driver App QR Code" class="w-full h-full object-contain">
             </div>
 
@@ -1021,9 +1075,10 @@
             </ul>
 
             <div class="w-full space-y-2">
-              <a href="https://taralets-tawny.vercel.app/?role=driver" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition block text-center">
-                🚀 Open Driver App Mode
-              </a>
+              <button type="button" onclick="window.taraletsApp.installPwaApp('driver')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                <span>📲</span>
+                <span>Install Driver App Now</span>
+              </button>
               <button onclick="window.taraletsApp.openRoleSimulator('driver')" class="w-full py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[11px] rounded-xl border border-slate-200 transition">
                 Switch Current Tab to Driver
               </button>
@@ -1038,7 +1093,7 @@
             <h4 class="font-extrabold text-slate-900 text-sm">TaraLets Passenger Edition</h4>
             <p class="text-[11px] text-slate-500 mt-0.5">Colleagues &amp; Office Workers</p>
             
-            <div class="my-4 w-52 h-52 bg-white p-3 rounded-2xl border-2 border-blue-200 shadow-md flex items-center justify-center">
+            <div class="my-4 w-48 h-48 sm:w-52 sm:h-52 bg-white p-3 rounded-2xl border-2 border-blue-200 shadow-md flex items-center justify-center">
               <img src="assets/qr/qr-passenger-app.svg" alt="TaraLets Passenger App QR Code" class="w-full h-full object-contain">
             </div>
 
@@ -1061,15 +1116,12 @@
             </ul>
 
             <div class="w-full space-y-2">
-              <button onclick="window.taraletsApp.openPassengerSignupModal()" class="w-full py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
-                <span>📝</span>
-                <span>Sign Up as Office Commuter</span>
+              <button type="button" onclick="window.taraletsApp.installPwaApp('passenger')" class="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                <span>📲</span>
+                <span>Install Commuter App Now</span>
               </button>
-              <a href="https://taralets-tawny.vercel.app/?role=passenger" class="w-full py-2 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition block text-center">
-                🚀 Open Commuter App Mode
-              </a>
-              <button onclick="window.taraletsApp.openRoleSimulator('passenger')" class="w-full py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[11px] rounded-xl border border-slate-200 transition">
-                Switch Current Tab to Commuter
+              <button onclick="window.taraletsApp.openPassengerSignupModal()" class="w-full py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-[11px] rounded-xl border border-slate-200 transition">
+                Sign Up as Commuter First
               </button>
             </div>
           </div>
@@ -1642,8 +1694,15 @@
   <!-- Standalone Script for zero-configuration offline & local file:// support -->
   <script src="js/bundle.js"></script>
 
-  <!-- Progressive Web App (PWA) Mobile/Tablet Service Worker Registration -->
+  <!-- Progressive Web App (PWA) Mobile/Tablet Service Worker Registration & Install Capture -->
   <script>
+    // Capture native PWA install prompt early
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+      console.log('TaraLets PWA install prompt ready');
+    });
+
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then((reg) => {
