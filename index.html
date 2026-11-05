@@ -33,15 +33,15 @@
 
   <!-- ================= TOP NAVIGATION BAR ================= -->
   <header class="glass-header sticky top-0 z-30 border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-1.5 sm:gap-4 overflow-hidden">
       
       <!-- Brand & Tagline -->
-      <div class="flex items-center gap-3">
-        <img src="assets/logo/taralets-icon.svg" alt="TaraLets Logo" class="w-11 h-11 rounded-2xl shadow-md shadow-emerald-950/20 hover:scale-105 transition transform cursor-pointer">
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <img src="assets/logo/taralets-icon.svg" alt="TaraLets Logo" class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl shadow-md shadow-emerald-950/20 hover:scale-105 transition transform cursor-pointer shrink-0">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="font-extrabold text-xl tracking-tight text-slate-900">Tara<span class="text-emerald-600">Lets</span></span>
-            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900">Tara<span class="text-emerald-600">Lets</span></span>
+            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
               Work Commute
             </span>
           </div>
@@ -50,34 +50,47 @@
       </div>
 
       <!-- Center Role Switcher: Driver vs Commuter Mode -->
-      <div id="nav-role-switcher-container" class="flex items-center">
-        <div id="nav-role-switcher" class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-          <button class="role-switcher-btn px-3 sm:px-4 py-1.5 text-xs font-bold rounded-lg transition" data-role="driver">
-            🚗 Driver Mode
+      <div id="nav-role-switcher-container" class="flex items-center shrink-0">
+        <div id="nav-role-switcher" class="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-xl border border-slate-200">
+          <button class="role-switcher-btn px-2 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition" data-role="driver">
+            🚗 <span class="hidden xs:inline">Driver</span><span class="xs:hidden">Drv</span>
           </button>
-          <button class="role-switcher-btn px-3 sm:px-4 py-1.5 text-xs font-bold rounded-lg transition" data-role="passenger">
-            🚶 Commuter Mode
+          <button class="role-switcher-btn px-2 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition" data-role="passenger">
+            🚶 <span class="hidden xs:inline">Commuter</span><span class="xs:hidden">Pax</span>
           </button>
         </div>
 
-        <!-- Commuter-Only Mode Badge (Activated after passenger signs up) -->
-        <div id="nav-commuter-only-badge" class="hidden items-center gap-2 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white px-3 sm:px-4 py-1.5 rounded-xl text-xs font-extrabold shadow-sm">
+        <!-- Commuter-Only Mode Badge (Activated after passenger signs up or logs in) -->
+        <div id="nav-commuter-only-badge" class="hidden items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-extrabold shadow-sm">
           <span>🚶</span>
-          <span>TaraLets Commuter App</span>
-          <span class="text-[9px] bg-white/20 text-blue-100 px-2 py-0.5 rounded-full font-bold">Passenger Mode</span>
-          <button onclick="window.taraletsApp.exitCommuterOnlyMode()" class="text-[10px] text-blue-200 hover:text-white underline ml-1 font-semibold" title="Exit Commuter Only Mode to view driver options">
+          <span class="hidden xs:inline">TaraLets</span>
+          <span>Commuter</span>
+          <span class="text-[9px] bg-white/20 text-blue-100 px-1.5 py-0.2 rounded-full font-bold hidden sm:inline">Mode</span>
+          <button onclick="window.taraletsApp.exitCommuterOnlyMode()" class="text-[10px] text-blue-200 hover:text-white underline ml-0.5 font-semibold" title="Exit Commuter Mode">
             (Switch)
           </button>
         </div>
       </div>
 
-      <!-- Right User Identity & Quick Reset -->
-      <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Right User Identity & Quick Actions -->
+      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
         
-        <!-- Commuter Sign-Up Header CTA -->
-        <button id="btn-header-signup" onclick="window.taraletsApp.openPassengerSignupModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white rounded-xl text-xs font-extrabold transition shadow-sm" title="Register New Office Commuter Profile">
+        <!-- Commuter Log-In Button (Visible when NOT logged in as commuter) -->
+        <button id="btn-header-login" onclick="window.taraletsApp.openPassengerLoginModal()" class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-extrabold transition shadow-sm" title="Log in as Registered Commuter">
+          <span>🔑</span>
+          <span class="hidden sm:inline">Log In</span>
+        </button>
+
+        <!-- Commuter Log-Out Button (Visible when logged in as commuter) -->
+        <button id="btn-header-logout" onclick="window.taraletsApp.handlePassengerLogout()" class="hidden items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-extrabold transition shadow-sm" title="Log Out of Commuter Session">
+          <span>🚪</span>
+          <span class="hidden sm:inline">Log Out</span>
+        </button>
+
+        <!-- Commuter Sign-Up Header CTA (Desktop/Tablet) -->
+        <button id="btn-header-signup" onclick="window.taraletsApp.openPassengerSignupModal()" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white rounded-xl text-xs font-extrabold transition shadow-sm" title="Register New Office Commuter Profile">
           <span>📝</span>
-          <span class="hidden md:inline">Sign Up Commuter</span>
+          <span>Sign Up</span>
         </button>
         
         <!-- Persona Quick Selector (Driver) -->
@@ -89,37 +102,37 @@
         </div>
 
         <!-- Current User Avatar Pill -->
-        <div class="flex items-center gap-2.5 bg-white border border-slate-200 py-1 px-2.5 rounded-full shadow-sm">
+        <div class="flex items-center gap-1.5 sm:gap-2.5 bg-white border border-slate-200 py-1 px-1.5 sm:px-2.5 rounded-full shadow-sm">
           <img id="current-user-avatar" src="" alt="Avatar" class="w-7 h-7 rounded-full object-cover">
-          <div class="hidden sm:block text-left">
+          <div class="hidden md:block text-left">
             <div id="current-user-name" class="text-xs font-bold text-slate-800 leading-none">Loading...</div>
             <div id="current-user-subtitle" class="text-[10px] text-slate-400 leading-tight mt-0.5">...</div>
           </div>
-          <span id="current-user-badge" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
+          <span id="current-user-badge" class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
             Role
           </span>
         </div>
 
         <!-- Commute Wallet Pill -->
-        <button onclick="window.taraletsApp.openPaymentCenterModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-full text-xs font-bold text-emerald-800 transition shadow-2xs" title="Open Modes of Payment & Commute Wallet">
+        <button onclick="window.taraletsApp.openPaymentCenterModal()" class="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-full text-xs font-bold text-emerald-800 transition shadow-2xs" title="Open Modes of Payment & Commute Wallet">
           <span>⚡</span>
           <span id="header-wallet-balance">₱0.00</span>
         </button>
 
         <!-- Payment Modes Button -->
-        <button onclick="window.taraletsApp.openPaymentCenterModal()" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition" title="View Accepted Modes of Payment">
+        <button onclick="window.taraletsApp.openPaymentCenterModal()" class="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition" title="View Accepted Modes of Payment">
           <span>💳</span>
           <span>Payment Center</span>
         </button>
 
-        <!-- Mobile Apps QR Codes Button -->
-        <button onclick="window.taraletsApp.openAppDownloadModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-sm" title="Scan QR Code to Install Driver or Passenger Mobile Apps">
+        <!-- Mobile Apps QR Codes Button (Hidden on mobile phones to fit screen) -->
+        <button onclick="window.taraletsApp.openAppDownloadModal()" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-sm" title="Scan QR Code to Install Driver or Passenger Mobile Apps">
           <span>📱</span>
-          <span class="hidden sm:inline">Get Mobile Apps</span>
+          <span>Get Mobile Apps</span>
         </button>
 
         <!-- Reset Seed Data Button -->
-        <button id="btn-reset-data" title="Reset to Sample Metro Manila Data" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition">
+        <button id="btn-reset-data" title="Reset to Sample Metro Manila Data" class="hidden sm:inline-flex p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
           </svg>
@@ -314,14 +327,28 @@
             </select>
           </div>
 
-          <button onclick="window.taraletsApp.openPassengerSignupModal()"
-            class="px-3.5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-extrabold rounded-xl shadow-md transition flex items-center gap-1.5" title="Register New Commuter Profile">
+          <!-- Commuter Log-In Button -->
+          <button id="btn-pax-login" onclick="window.taraletsApp.openPassengerLoginModal()"
+            class="px-3 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5" title="Log in as existing commuter">
+            <span>🔑</span>
+            <span>Log In</span>
+          </button>
+
+          <!-- Commuter Log-Out Button -->
+          <button id="btn-pax-logout" onclick="window.taraletsApp.handlePassengerLogout()"
+            class="hidden px-3 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-sm transition items-center gap-1.5" title="Log out of commuter session">
+            <span>🚪</span>
+            <span>Log Out</span>
+          </button>
+
+          <button id="btn-pax-signup" onclick="window.taraletsApp.openPassengerSignupModal()"
+            class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-extrabold rounded-xl shadow-sm transition flex items-center gap-1.5" title="Register New Commuter Profile">
             <span>📝</span>
             <span>Sign Up as Commuter</span>
           </button>
 
           <button onclick="window.taraletsApp.openAddCommuterModal()"
-            class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5">
+            class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5">
             <span>+</span>
             <span>New Commute Request</span>
           </button>
@@ -1270,6 +1297,21 @@
       <!-- Modal Body Form -->
       <form id="form-passenger-signup" class="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto touch-scroll">
         
+        <!-- Already Registered Account Banner -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🔑</span>
+            <div>
+              <p class="font-bold text-blue-900 text-xs">Already have a commuter account?</p>
+              <p class="text-[11px] text-blue-700">Log in with your registered mobile phone or work email.</p>
+            </div>
+          </div>
+          <button type="button" onclick="window.taraletsApp.switchToLoginFromSignup()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold rounded-lg text-xs transition shrink-0 flex items-center justify-center gap-1">
+            <span>Log In Here</span>
+            <span>→</span>
+          </button>
+        </div>
+
         <!-- Step 1: Personal Info -->
         <div>
           <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -1420,6 +1462,82 @@
     </div>
   </div>
 
+  <!-- ======================================================= -->
+  <!-- MODAL 11: PASSENGER / COMMUTER LOG-IN MODAL             -->
+  <!-- ======================================================= -->
+  <div id="modal-passenger-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-2.5 sm:p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col transform transition-all">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 p-4 sm:p-5 text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-2xl shadow-inner">
+            🔑
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] uppercase tracking-wider font-extrabold bg-blue-500/40 px-2 py-0.5 rounded-full border border-blue-400/30">
+                Commuter Access
+              </span>
+            </div>
+            <h3 class="font-extrabold text-base mt-0.5">Commuter Log In</h3>
+            <p class="text-xs text-blue-200">Log in to book rides with verified colleagues</p>
+          </div>
+        </div>
+        <button data-close-modal="modal-passenger-login" class="text-white/80 hover:text-white p-1 rounded-lg">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto touch-scroll">
+        
+        <!-- Login Form -->
+        <form id="form-passenger-login" class="space-y-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Mobile Phone Number or Work Email</label>
+            <input type="text" id="login-identifier" required
+              placeholder="e.g. 0917-555-0192 or miguel@bpo.com.ph"
+              class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            <p class="text-[11px] text-slate-400 mt-1">Enter your registered mobile phone or work email address</p>
+          </div>
+
+          <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+            <span>🔑</span>
+            <span>Log In to Commuter Mode</span>
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Or 1-Tap Quick Log-In</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <!-- Saved Accounts List -->
+        <div>
+          <div class="text-[11px] font-bold text-slate-600 mb-2 flex items-center justify-between">
+            <span>Registered Commuter Accounts:</span>
+            <span class="text-[10px] text-slate-400 font-normal">Tap to sign in</span>
+          </div>
+          <div id="login-saved-commuters-list" class="space-y-2 max-h-48 overflow-y-auto touch-scroll pr-1">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Switch to Sign Up -->
+        <div class="pt-3 border-t border-slate-100 text-center">
+          <span class="text-slate-500 text-xs">Don't have a commuter profile yet? </span>
+          <button type="button" onclick="window.taraletsApp.switchToSignupFromLogin()" class="font-extrabold text-blue-600 hover:text-blue-800 underline">
+            Sign Up as Commuter
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- ================= MOBILE & TABLET BOTTOM APP BAR ================= -->
   <nav class="glass-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 px-2 py-1 safe-bottom-nav lg:hidden">
     <div class="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
@@ -1448,10 +1566,10 @@
         <span class="text-[9px] font-extrabold mt-1 tracking-tight">Wallet</span>
       </button>
 
-      <!-- Mobile Apps QR Tab -->
-      <button onclick="window.taraletsApp.openAppDownloadModal()" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Install Mobile Apps">
-        <span class="text-xl leading-none">📱</span>
-        <span class="text-[9px] font-extrabold mt-1 tracking-tight">Get Apps</span>
+      <!-- Commuter Account / Log-In / Log-Out Tab -->
+      <button id="mobile-tab-account" onclick="window.taraletsApp.handleMobileAccountTab()" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-blue-600 active:scale-95 transition" title="Commuter Account">
+        <span class="text-xl leading-none" id="mobile-tab-account-icon">🔑</span>
+        <span class="text-[9px] font-extrabold mt-1 tracking-tight" id="mobile-tab-account-label">Log In</span>
       </button>
 
     </div>

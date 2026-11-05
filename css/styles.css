@@ -2,12 +2,31 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+/* Prevent horizontal viewport overflow & fit mobile/tablet screen */
+html {
+  box-sizing: border-box;
+  -webkit-text-size-adjust: 100%;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   background-color: #f8fafc;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Custom scrollbars */
@@ -97,8 +116,19 @@ body {
   scroll-behavior: smooth;
 }
 
-/* Mobile Bottom Sheet Modal Behavior on small screens (< 640px) */
+/* Mobile Screen Fit & Safe Modal Behavior (< 640px) */
 @media (max-width: 639px) {
+  /* Prevent any modal dialog from exceeding screen bounds */
+  .fixed.inset-0.z-50 {
+    padding: 0.5rem !important;
+  }
+  .fixed.inset-0.z-50 > div {
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 2rem) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
   .modal-mobile-sheet {
     align-items: flex-end !important;
     padding: 0 !important;
@@ -108,6 +138,7 @@ body {
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
     width: 100% !important;
+    max-width: 100vw !important;
     margin: 0 !important;
   }
 }

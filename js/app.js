@@ -40,6 +40,8 @@ class TaraLetsApp {
 
       if (actionParam === 'signup' || actionParam === 'register') {
         setTimeout(() => this.openPassengerSignupModal(), 400);
+      } else if (actionParam === 'login' || actionParam === 'signin') {
+        setTimeout(() => this.openPassengerLoginModal(), 400);
       } else if (actionParam === 'wallet') {
         setTimeout(() => this.openPaymentCenterModal(), 400);
       } else if (actionParam === 'install' || actionParam === 'qr') {
@@ -184,9 +186,27 @@ class TaraLetsApp {
       signupForm.addEventListener('submit', (e) => this.handlePassengerSignupSubmit(e));
     }
 
+    // Passenger Log-In Form
+    const loginForm = document.getElementById('form-passenger-login');
+    if (loginForm) {
+      loginForm.addEventListener('submit', (e) => this.handlePassengerLoginSubmit(e));
+    }
+
     // Global custom events
     window.addEventListener('taralets:passenger-registered', (e) => {
       this.showToast(`🎉 Welcome to TaraLets, ${e.detail.name}! Commuter Mode enabled.`, "success");
+      this.syncActiveRoleUI();
+      this.render();
+    });
+
+    window.addEventListener('taralets:passenger-logged-in', (e) => {
+      this.showToast(`🎉 Welcome back, ${e.detail.name}! Commuter Mode enabled.`, "success");
+      this.syncActiveRoleUI();
+      this.render();
+    });
+
+    window.addEventListener('taralets:passenger-logged-out', (e) => {
+      this.showToast(`Logged out of Commuter Mode. You can log in or sign up anytime.`, "info");
       this.syncActiveRoleUI();
       this.render();
     });
@@ -244,6 +264,7 @@ class TaraLetsApp {
 
   syncActiveRoleUI() {
     const isCommuterOnly = storage.isCommuterOnlyMode();
+    const isPaxLoggedIn = storage.isPassengerLoggedIn();
     const activeRole = isCommuterOnly ? 'passenger' : storage.getActiveRole();
     const isDriver = !isCommuterOnly && activeRole === 'driver';
 
@@ -265,6 +286,65 @@ class TaraLetsApp {
         commuterOnlyBadge.classList.remove('flex');
       }
       if (driverSelectContainer) driverSelectContainer.classList.remove('hidden');
+    }
+
+    // Synchronize Header Auth Buttons
+    const btnHeaderLogin = document.getElementById('btn-header-login');
+    const btnHeaderLogout = document.getElementById('btn-header-logout');
+    const btnHeaderSignup = document.getElementById('btn-header-signup');
+
+    if (btnHeaderLogin && btnHeaderLogout) {
+      if (isPaxLoggedIn || isCommuterOnly) {
+        btnHeaderLogin.classList.add('hidden');
+        btnHeaderLogin.classList.remove('flex');
+        btnHeaderLogout.classList.remove('hidden');
+        btnHeaderLogout.classList.add('flex');
+        if (btnHeaderSignup) btnHeaderSignup.classList.add('hidden');
+      } else {
+        btnHeaderLogin.classList.remove('hidden');
+        btnHeaderLogin.classList.add('flex');
+        btnHeaderLogout.classList.add('hidden');
+        btnHeaderLogout.classList.remove('flex');
+        if (btnHeaderSignup) {
+          btnHeaderSignup.classList.remove('hidden');
+          btnHeaderSignup.classList.add('hidden', 'md:flex');
+        }
+      }
+    }
+
+    // Synchronize Passenger Section Action Buttons
+    const btnPaxLogin = document.getElementById('btn-pax-login');
+    const btnPaxLogout = document.getElementById('btn-pax-logout');
+    if (btnPaxLogin && btnPaxLogout) {
+      if (isPaxLoggedIn || isCommuterOnly) {
+        btnPaxLogin.classList.add('hidden');
+        btnPaxLogin.classList.remove('flex');
+        btnPaxLogout.classList.remove('hidden');
+        btnPaxLogout.classList.add('flex');
+      } else {
+        btnPaxLogin.classList.remove('hidden');
+        btnPaxLogin.classList.add('flex');
+        btnPaxLogout.classList.add('hidden');
+        btnPaxLogout.classList.remove('flex');
+      }
+    }
+
+    // Synchronize Mobile Bottom App Bar Account Tab
+    const mobileTabAccount = document.getElementById('mobile-tab-account');
+    const mobileTabAccountIcon = document.getElementById('mobile-tab-account-icon');
+    const mobileTabAccountLabel = document.getElementById('mobile-tab-account-label');
+    if (mobileTabAccountIcon && mobileTabAccountLabel) {
+      if (isPaxLoggedIn || isCommuterOnly) {
+        mobileTabAccountIcon.textContent = '🚪';
+        mobileTabAccountLabel.textContent = 'Log Out';
+        mobileTabAccountLabel.className = 'text-[9px] font-extrabold mt-1 tracking-tight text-rose-600';
+        if (mobileTabAccount) mobileTabAccount.title = 'Log Out of Commuter Session';
+      } else {
+        mobileTabAccountIcon.textContent = '🔑';
+        mobileTabAccountLabel.textContent = 'Log In';
+        mobileTabAccountLabel.className = 'text-[9px] font-extrabold mt-1 tracking-tight text-blue-600';
+        if (mobileTabAccount) mobileTabAccount.title = 'Commuter Log In';
+      }
     }
 
     document.querySelectorAll('.role-switcher-btn').forEach(btn => {
@@ -296,13 +376,13 @@ class TaraLetsApp {
     if (mobileIcon && mobileLabel) {
       if (isCommuterOnly) {
         mobileIcon.textContent = '🚶';
-        mobileLabel.textContent = 'Commuter Mode';
+        mobileLabel.textContent = 'Commuter';
       } else if (isDriver) {
         mobileIcon.textContent = '🚶';
-        mobileLabel.textContent = 'Switch to Commuter';
+        mobileLabel.textContent = 'Commuter';
       } else {
         mobileIcon.textContent = '🚗';
-        mobileLabel.textContent = 'Switch to Driver';
+        mobileLabel.textContent = 'Driver';
       }
     }
 
@@ -321,10 +401,116 @@ class TaraLetsApp {
   }
 
   exitCommuterOnlyMode() {
-    storage.setCommuterOnlyMode(false);
+    storage.logoutPassenger();
     this.showToast("Exited Commuter-Only Mode. All driver & commuter controls now visible.", "info");
     this.syncActiveRoleUI();
     this.render();
+  }
+
+  handlePassengerLogout() {
+    storage.logoutPassenger();
+    this.showToast("🚪 Logged out of Commuter Mode successfully.", "info");
+    this.syncActiveRoleUI();
+    this.render();
+  }
+
+  handleMobileAccountTab() {
+    if (storage.isPassengerLoggedIn() || storage.isCommuterOnlyMode()) {
+      this.handlePassengerLogout();
+    } else {
+      this.openPassengerLoginModal();
+    }
+  }
+
+  openPassengerLoginModal() {
+    const modal = document.getElementById('modal-passenger-login');
+    if (!modal) return;
+    this.renderLoginSavedCommuters();
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  closePassengerLoginModal() {
+    const modal = document.getElementById('modal-passenger-login');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  switchToSignupFromLogin() {
+    this.closePassengerLoginModal();
+    this.openPassengerSignupModal();
+  }
+
+  switchToLoginFromSignup() {
+    const signupModal = document.getElementById('modal-passenger-signup');
+    if (signupModal) {
+      signupModal.classList.add('hidden');
+      signupModal.classList.remove('flex');
+    }
+    this.openPassengerLoginModal();
+  }
+
+  handlePassengerLoginSubmit(e) {
+    e.preventDefault();
+    const input = document.getElementById('login-identifier');
+    if (!input) return;
+    const value = input.value.trim();
+    if (!value) {
+      this.showToast("Please enter your registered phone number or work email.", "error");
+      return;
+    }
+
+    try {
+      const user = storage.loginPassenger(value);
+      this.closePassengerLoginModal();
+      input.value = '';
+      this.showToast(`🎉 Welcome back, ${user.name}! Commuter Mode enabled.`, "success");
+      this.syncActiveRoleUI();
+      this.render();
+      setTimeout(() => this.scrollToSection('passenger-welcome-banner'), 300);
+    } catch (err) {
+      this.showToast(err.message, "error");
+    }
+  }
+
+  quickLoginPassenger(paxId) {
+    try {
+      const user = storage.loginPassenger(paxId);
+      this.closePassengerLoginModal();
+      this.showToast(`🎉 Welcome back, ${user.name}! Commuter Mode enabled.`, "success");
+      this.syncActiveRoleUI();
+      this.render();
+      setTimeout(() => this.scrollToSection('passenger-welcome-banner'), 300);
+    } catch (err) {
+      this.showToast(err.message, "error");
+    }
+  }
+
+  renderLoginSavedCommuters() {
+    const container = document.getElementById('login-saved-commuters-list');
+    if (!container) return;
+    const passengers = storage.getPassengers();
+    const currentPax = storage.getCurrentPassenger();
+
+    container.innerHTML = passengers.map(p => `
+      <div onclick="window.taraletsApp.quickLoginPassenger('${p.id}')"
+        class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/60 cursor-pointer transition active:scale-[0.98]">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <img src="${p.avatar}" alt="${p.name}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0">
+          <div class="min-w-0">
+            <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5 truncate">
+              <span class="truncate">${p.name}</span>
+              ${p.id === currentPax.id ? '<span class="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-semibold shrink-0">Current</span>' : ''}
+            </div>
+            <div class="text-[10px] text-slate-500 truncate">${p.company} • ${p.phone}</div>
+          </div>
+        </div>
+        <button type="button" class="ml-2 px-2.5 py-1 text-[11px] font-bold bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg shrink-0">
+          Log In
+        </button>
+      </div>
+    `).join('');
   }
 
   openPassengerSignupModal() {
@@ -870,53 +1056,106 @@ class TaraLetsApp {
   renderPassengerDashboard() {
     const currentPax = storage.getCurrentPassenger();
     const isCommuterOnly = storage.isCommuterOnlyMode();
+    const isPaxLoggedIn = storage.isPassengerLoggedIn();
 
     // Render Welcome Banner
     const bannerContainer = document.getElementById('passenger-welcome-banner');
     if (bannerContainer) {
       const matchTrips = getMatchingTripsForPassenger(currentPax);
-      bannerContainer.innerHTML = `
-        <div class="bg-gradient-to-r ${isCommuterOnly ? 'from-blue-700 via-indigo-700 to-blue-800' : 'from-slate-800 to-blue-900'} text-white p-5 rounded-2xl shadow-md border border-blue-600/30 mb-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div class="flex items-start sm:items-center gap-3.5">
-              <img src="${currentPax.avatar}" alt="${currentPax.name}" class="w-14 h-14 rounded-2xl object-cover border-2 border-white/40 shadow-sm shrink-0">
-              <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <h2 class="text-base sm:text-lg font-extrabold text-white">Welcome, ${currentPax.name}!</h2>
-                  <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 uppercase tracking-wide">
-                    ✓ Verified Commuter
-                  </span>
+
+      if (!isCommuterOnly && !isPaxLoggedIn) {
+        // Guest / Logged-out Commuter Welcome View
+        bannerContainer.innerHTML = `
+          <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-5 rounded-2xl shadow-md border border-blue-500/30 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-start sm:items-center gap-3.5">
+                <div class="w-12 h-12 rounded-2xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-2xl shrink-0">
+                  🚶
                 </div>
-                <p class="text-xs text-blue-100 font-medium mt-0.5">
-                  🏢 <strong>${currentPax.company}</strong> (${currentPax.jobTitle || 'Verified Employee'}) • Shift: <strong>${currentPax.workSchedule || '08:00 AM - 05:00 PM'}</strong>
-                </p>
-                <p class="text-[11px] text-blue-200 mt-0.5">
-                  📍 Pickup Area: <strong>${currentPax.pickupLocation}</strong> • Badge: <span class="font-mono bg-white/20 px-1.5 py-0.2 rounded">${currentPax.employeeBadgeId || '#EMP-ID'}</span>
-                </p>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="text-base sm:text-lg font-extrabold text-white">Office Commuter Station</h2>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/30 text-blue-200 border border-blue-400/30">
+                      Work Carpool & Motorcycle Pool
+                    </span>
+                  </div>
+                  <p class="text-xs text-blue-100 mt-0.5">
+                    Heading to <strong>BGC, Makati CBD, Ortigas, Eastwood or Alabang</strong>? Log in or sign up to request rides directly from colleagues!
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10">
+                <button onclick="window.taraletsApp.openPassengerLoginModal()" class="text-xs bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                  <span>🔑</span>
+                  <span>Log In</span>
+                </button>
+                <button onclick="window.taraletsApp.openPassengerSignupModal()" class="text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white font-extrabold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                  <span>📝</span>
+                  <span>Sign Up</span>
+                </button>
               </div>
             </div>
 
-            <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-white/10">
-              <span class="text-[10px] uppercase font-bold tracking-wider text-blue-200">
-                ${isCommuterOnly ? '🔒 Commuter Mode Only' : '🚶 Commuter Station'}
-              </span>
-              <button onclick="window.taraletsApp.openPassengerSignupModal()" class="text-xs bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
-                <span>📝</span>
-                <span>Edit / New Profile</span>
+            <div class="mt-3 pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-blue-200">
+              <p>💡 <em>Colleagues driving to work:</em> Vehicle owners have empty car seats and motorcycle back rides. Browse active routes below!</p>
+              <button onclick="window.taraletsApp.scrollToSection('passenger-matching-drivers')" class="underline font-bold text-white hover:text-blue-200 shrink-0">
+                View ${matchTrips.length} Available Route(s) ↓
               </button>
             </div>
           </div>
+        `;
+      } else {
+        // Authenticated / Commuter-Only Mode Banner
+        bannerContainer.innerHTML = `
+          <div class="bg-gradient-to-r ${isCommuterOnly ? 'from-blue-700 via-indigo-700 to-blue-800' : 'from-slate-800 to-blue-900'} text-white p-5 rounded-2xl shadow-md border border-blue-600/30 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-start sm:items-center gap-3.5 min-w-0">
+                <img src="${currentPax.avatar}" alt="${currentPax.name}" class="w-14 h-14 rounded-2xl object-cover border-2 border-white/40 shadow-sm shrink-0">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="text-base sm:text-lg font-extrabold text-white truncate">Welcome, ${currentPax.name}!</h2>
+                    <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 uppercase tracking-wide shrink-0">
+                      ✓ Verified Commuter
+                    </span>
+                  </div>
+                  <p class="text-xs text-blue-100 font-medium mt-0.5 truncate">
+                    🏢 <strong>${currentPax.company}</strong> (${currentPax.jobTitle || 'Verified Employee'}) • Shift: <strong>${currentPax.workSchedule || '08:00 AM - 05:00 PM'}</strong>
+                  </p>
+                  <p class="text-[11px] text-blue-200 mt-0.5 truncate">
+                    📍 Pickup Area: <strong>${currentPax.pickupLocation}</strong> • Badge: <span class="font-mono bg-white/20 px-1.5 py-0.2 rounded">${currentPax.employeeBadgeId || '#EMP-ID'}</span>
+                  </p>
+                </div>
+              </div>
 
-          <div class="mt-3 pt-3 border-t border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-blue-100">
-            <p>
-              ✨ <strong>Ready for work?</strong> Below are active drivers commuting along your corridor to <strong>${currentPax.company}</strong>. Tap <strong>"Request a Ride to Driver"</strong> to reserve your seat!
-            </p>
-            <button onclick="window.taraletsApp.scrollToSection('passenger-matching-drivers')" class="underline font-bold text-white hover:text-blue-200 shrink-0">
-              View ${matchTrips.length} Available Route(s) ↓
-            </button>
+              <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-white/10">
+                <span class="text-[10px] uppercase font-bold tracking-wider text-blue-200">
+                  ${isCommuterOnly ? '🔒 Commuter Mode Only' : '🚶 Commuter Station'}
+                </span>
+                <div class="flex items-center gap-2">
+                  <button onclick="window.taraletsApp.handlePassengerLogout()" class="text-xs bg-rose-600/80 hover:bg-rose-600 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm" title="Log Out of Commuter Mode">
+                    <span>🚪</span>
+                    <span>Log Out</span>
+                  </button>
+                  <button onclick="window.taraletsApp.openPassengerSignupModal()" class="text-xs bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                    <span>📝</span>
+                    <span class="hidden sm:inline">New Profile</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-blue-100">
+              <p>
+                ✨ <strong>Ready for work?</strong> Below are active drivers commuting along your corridor to <strong>${currentPax.company}</strong>. Tap <strong>"Request a Ride to Driver"</strong> to reserve your seat!
+              </p>
+              <button onclick="window.taraletsApp.scrollToSection('passenger-matching-drivers')" class="underline font-bold text-white hover:text-blue-200 shrink-0">
+                View ${matchTrips.length} Available Route(s) ↓
+              </button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
     }
 
     const myBookings = storage.getBookings().filter(b => b.passengerId === currentPax.id);

@@ -20,6 +20,8 @@ const STORAGE_KEYS = {
   ACTIVE_USER_ROLE: 'taralets_active_role',
   CURRENT_DRIVER_ID: 'taralets_current_driver_id',
   CURRENT_PASSENGER_ID: 'taralets_current_passenger_id',
+  PASSENGER_LOGGED_IN: 'taralets_passenger_logged_in',
+  COMMUTER_ONLY: 'taralets_commuter_only',
   MESSAGES: 'taralets_messages',
   TRANSACTIONS: 'taralets_transactions'
 };
@@ -192,6 +194,51 @@ class StorageService {
     window.dispatchEvent(new CustomEvent('taralets:role-changed', { detail: { role: 'passenger', commuterOnly: !!isLocked } }));
   }
 
+  isPassengerLoggedIn() {
+    return localStorage.getItem('taralets_passenger_logged_in') === 'true';
+  }
+
+  loginPassenger(identifier) {
+    if (!identifier) {
+      throw new Error('Please enter your registered mobile phone number, email, or select an account.');
+    }
+    const cleanRaw = identifier.trim();
+    const cleanLower = cleanRaw.toLowerCase();
+    const cleanDigits = cleanRaw.replace(/[^0-9]/g, '');
+    const passengers = this.getPassengers();
+
+    const matched = passengers.find(p => {
+      if (p.id === cleanRaw) return true;
+      if (p.email && p.email.toLowerCase() === cleanLower) return true;
+      if (p.phone) {
+        const pDigits = p.phone.replace(/[^0-9]/g, '');
+        if (cleanDigits.length >= 7 && pDigits.includes(cleanDigits)) return true;
+        if (cleanDigits.length >= 7 && cleanDigits.includes(pDigits)) return true;
+      }
+      if (p.name && p.name.toLowerCase() === cleanLower) return true;
+      return false;
+    });
+
+    if (!matched) {
+      throw new Error(`No registered commuter account found for "${cleanRaw}". Please verify or sign up first.`);
+    }
+
+    this.setCurrentPassengerId(matched.id);
+    localStorage.setItem('taralets_passenger_logged_in', 'true');
+    this.setCommuterOnlyMode(true);
+    this.setActiveRole('passenger');
+    window.dispatchEvent(new CustomEvent('taralets:passenger-logged-in', { detail: matched }));
+    return matched;
+  }
+
+  logoutPassenger() {
+    const currentPax = this.getCurrentPassenger();
+    localStorage.removeItem('taralets_passenger_logged_in');
+    this.setCommuterOnlyMode(false);
+    window.dispatchEvent(new CustomEvent('taralets:passenger-logged-out', { detail: currentPax }));
+    return currentPax;
+  }
+
   registerPassenger(data) {
     const id = "pax-" + Date.now();
     const hubs = this.getWorkplaceHubs();
@@ -225,6 +272,7 @@ class StorageService {
 
     this.savePassenger(newPassenger);
     this.setCurrentPassengerId(newPassenger.id);
+    localStorage.setItem('taralets_passenger_logged_in', 'true');
     this.setCommuterOnlyMode(true);
     this.setActiveRole('passenger');
     window.dispatchEvent(new CustomEvent('taralets:passenger-registered', { detail: newPassenger }));
