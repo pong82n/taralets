@@ -2,6 +2,23 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+/* ======================================================== */
+/* TARA LETS LOGO-INSPIRED COLOR PALETTE & THEMES           */
+/* ======================================================== */
+
+:root {
+  /* Colors from taralets-icon.svg & taralets-full-logo.svg */
+  --logo-emerald-deep: #022c22;      /* Logo Background Stop 1 */
+  --logo-emerald-rich: #064e3b;      /* Logo Background Stop 2 */
+  --logo-slate-night: #0f172a;       /* Logo Background Stop 3 */
+  --logo-mint: #10b981;              /* Logo Highway Stem & Arrow */
+  --logo-mint-bright: #34d399;       /* Logo Mint Glow */
+  --logo-cyan: #06b6d4;              /* Logo Driver Dot & Highway Swoosh */
+  --logo-cyan-bright: #38bdf8;       /* Logo Cyan Glow */
+  --logo-gold: #fbbf24;              /* Logo Passenger Dot */
+  --logo-gold-glow: #f59e0b;         /* Logo Gold Accent */
+}
+
 /* Prevent horizontal viewport overflow & ensure smooth mobile window scrolling */
 html {
   box-sizing: border-box;
@@ -11,6 +28,7 @@ html {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  background-color: #022c22;
 }
 
 *, *::before, *::after {
@@ -20,29 +38,76 @@ html {
 body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #f8fafc;
   -webkit-tap-highlight-color: transparent;
   width: 100%;
   overflow-x: hidden;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   min-height: 100vh;
+  transition: background-color 0.3s ease;
 }
 
-/* Custom scrollbars */
+/* 1. Signature Logo Theme: Deep Emerald & Cyan Glow (DEFAULT) */
+body, 
+body.theme-logo-emerald {
+  background-color: #022c22;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(6, 78, 59, 0.95) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.25) 0px, transparent 45%),
+    radial-gradient(at 50% 50%, rgba(2, 44, 34, 0.90) 0px, transparent 65%),
+    radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.22) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.98) 0px, transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* 2. Alternative Theme: Soft Logo Mint & Sky Glow (Light) */
+body.theme-logo-mint {
+  background-color: #ecfdf5;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.20) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.18) 0px, transparent 40%),
+    radial-gradient(at 50% 50%, rgba(240, 253, 244, 0.85) 0px, transparent 60%),
+    radial-gradient(at 100% 100%, rgba(209, 250, 229, 0.95) 0px, transparent 50%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* 3. Alternative Theme: Logo Midnight Obsidian */
+body.theme-logo-midnight {
+  background-color: #01140e;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(4, 47, 46, 0.95) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(14, 116, 144, 0.35) 0px, transparent 40%),
+    radial-gradient(at 50% 50%, rgba(2, 20, 15, 0.98) 0px, transparent 65%),
+    radial-gradient(at 100% 100%, rgba(2, 6, 23, 0.98) 0px, transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Custom scrollbars themed with logo colors */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #022c22;
+}
+body.theme-logo-mint ::-webkit-scrollbar-track {
+  background: #ecfdf5;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #065f46;
   border-radius: 9999px;
 }
+body.theme-logo-mint ::-webkit-scrollbar-thumb {
+  background: #6ee7b7;
+}
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #10b981;
 }
 
 /* Custom Leaflet overrides & mobile scroll passthrough */
@@ -72,19 +137,143 @@ body {
   line-height: 1.4;
 }
 
-/* Glassmorphism accents */
+/* Glass Header matching Logo Theme */
 .glass-header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(2, 44, 34, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.25);
+  box-shadow: 0 4px 20px -2px rgba(2, 44, 34, 0.6);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-/* Glass bottom app bar */
+body.theme-logo-mint .glass-header {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.08);
+}
+
+body.theme-logo-midnight .glass-header {
+  background: rgba(1, 20, 14, 0.92);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.2);
+  box-shadow: 0 4px 25px -2px rgba(0, 0, 0, 0.7);
+}
+
+/* Glass bottom app bar for Mobile Devices */
 .glass-bottom-bar {
+  background: rgba(2, 44, 34, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(52, 211, 153, 0.25);
+  box-shadow: 0 -8px 25px rgba(2, 44, 34, 0.7);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+body.theme-logo-mint .glass-bottom-bar {
   background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(16, 185, 129, 0.2);
   box-shadow: 0 -4px 20px -2px rgba(15, 23, 42, 0.08);
+}
+
+body.theme-logo-midnight .glass-bottom-bar {
+  background: rgba(1, 20, 14, 0.97);
+  border-top: 1px solid rgba(52, 211, 153, 0.2);
+  box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.8);
+}
+
+/* Tab text colors on mobile bottom bar */
+body:not(.theme-logo-mint) .glass-bottom-bar button {
+  color: #94a3b8;
+}
+
+body:not(.theme-logo-mint) .glass-bottom-bar button:hover,
+body:not(.theme-logo-mint) .glass-bottom-bar button:active {
+  color: #34d399;
+}
+
+body:not(.theme-logo-mint) .glass-bottom-bar button#mobile-tab-role {
+  color: #e2e8f0;
+}
+
+/* Header Text & UI Adaptations on Dark Logo Themes */
+body:not(.theme-logo-mint) .header-brand-text {
+  color: #ffffff !important;
+}
+
+body.theme-logo-mint .header-brand-text {
+  color: #0f172a !important;
+}
+
+body:not(.theme-logo-mint) #nav-role-switcher {
+  background: rgba(2, 44, 34, 0.75);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+body:not(.theme-logo-mint) .role-switcher-btn:not(.bg-white) {
+  color: #a7f3d0;
+}
+
+body:not(.theme-logo-mint) .role-switcher-btn:not(.bg-white):hover {
+  color: #ffffff;
+}
+
+body:not(.theme-logo-mint) #current-user-avatar-pill {
+  background: rgba(2, 44, 34, 0.85);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+body:not(.theme-logo-mint) #current-user-name {
+  color: #f8fafc;
+}
+
+body:not(.theme-logo-mint) #driver-user-select-container label {
+  color: #a7f3d0;
+}
+
+body:not(.theme-logo-mint) #driver-user-select {
+  background-color: rgba(2, 44, 34, 0.85);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #f8fafc;
+}
+
+/* Dashboard Cards Depth & Glow on Logo Theme */
+body:not(.theme-logo-mint) .bg-white {
+  background-color: rgba(255, 255, 255, 0.98);
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 10px 25px -5px rgba(2, 44, 34, 0.35), 0 8px 10px -6px rgba(2, 44, 34, 0.2);
+}
+
+body.theme-logo-mint .bg-white {
+  background-color: #ffffff;
+  border-color: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 4px 15px -2px rgba(16, 185, 129, 0.08);
+}
+
+/* App Footer matching Logo Background */
+.app-footer {
+  background: rgba(2, 44, 34, 0.95);
+  border-top: 1px solid rgba(52, 211, 153, 0.2);
+  color: #94a3b8;
+}
+
+body.theme-logo-mint .app-footer {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+body.theme-logo-midnight .app-footer {
+  background: rgba(1, 20, 14, 0.97);
+  border-top: 1px solid rgba(52, 211, 153, 0.18);
+  color: #64748b;
+}
+
+.app-footer strong {
+  color: #f1f5f9;
+}
+
+body.theme-logo-mint .app-footer strong {
+  color: #0f172a;
 }
 
 /* Badge glows */

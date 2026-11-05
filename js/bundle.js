@@ -1929,6 +1929,7 @@ class TaraLetsApp {
   }
 
   init() {
+    this.initTheme();
     this.handleUrlParams();
     this.setupEventListeners();
     this.mapManager.init();
@@ -3951,6 +3952,73 @@ class TaraLetsApp {
       toast.classList.add('opacity-0', 'translate-y-2');
       setTimeout(() => toast.remove(), 300);
     }, 4000);
+  }
+
+  // ========================================================
+  // LOGO-INSPIRED BACKGROUND THEME SYSTEM
+  // ========================================================
+  initTheme() {
+    const savedTheme = localStorage.getItem('taralets_theme') || 'logo-emerald';
+    this.setTheme(savedTheme, false);
+  }
+
+  setTheme(themeName, showToast = true) {
+    document.body.classList.remove('theme-logo-emerald', 'theme-logo-mint', 'theme-logo-midnight');
+
+    let metaColor = '#022c22';
+    let themeIcon = '🌲';
+    let themeLabel = 'Logo Forest';
+
+    if (themeName === 'logo-mint') {
+      document.body.classList.add('theme-logo-mint');
+      metaColor = '#ecfdf5';
+      themeIcon = '🍃';
+      themeLabel = 'Logo Mint';
+    } else if (themeName === 'logo-midnight') {
+      document.body.classList.add('theme-logo-midnight');
+      metaColor = '#01140e';
+      themeIcon = '🌙';
+      themeLabel = 'Logo Midnight';
+    } else {
+      themeName = 'logo-emerald';
+      document.body.classList.add('theme-logo-emerald');
+      metaColor = '#022c22';
+      themeIcon = '🌲';
+      themeLabel = 'Logo Forest';
+    }
+
+    // Update Meta Theme Color for mobile status bar & browser navigation
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', metaColor);
+    }
+
+    // Update HTML root background color for seamless mobile overscroll bounce
+    if (document.documentElement) {
+      document.documentElement.style.backgroundColor = metaColor;
+    }
+
+    // Update theme toggle button icon & label if present
+    const iconEl = document.getElementById('theme-icon');
+    const labelEl = document.getElementById('theme-label');
+    if (iconEl) iconEl.textContent = themeIcon;
+    if (labelEl) labelEl.textContent = themeLabel;
+
+    localStorage.setItem('taralets_theme', themeName);
+
+    if (showToast) {
+      this.showToast(`Theme: ${themeLabel} (Logo Palette)`, 'info');
+    }
+  }
+
+  cycleTheme() {
+    const currentTheme = localStorage.getItem('taralets_theme') || 'logo-emerald';
+    let nextTheme = 'logo-emerald';
+    if (currentTheme === 'logo-emerald') nextTheme = 'logo-mint';
+    else if (currentTheme === 'logo-mint') nextTheme = 'logo-midnight';
+    else nextTheme = 'logo-emerald';
+
+    this.setTheme(nextTheme, true);
   }
 }
 

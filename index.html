@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>TaraLets Commute | Driver-Booked Workplace Carpool & Moto-pooling</title>
   
-  <!-- Mobile & Tablet PWA Meta Tags -->
-  <meta name="theme-color" content="#059669">
+  <!-- Mobile & Tablet PWA Meta Tags (Theme matching TaraLets Logo) -->
+  <meta name="theme-color" content="#022c22">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,26 +26,26 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   
-  <!-- Custom Styles -->
+  <!-- Custom Styles with TaraLets Logo Theme -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+<body class="theme-logo-emerald min-h-screen flex flex-col">
 
   <!-- ================= TOP NAVIGATION BAR ================= -->
-  <header class="glass-header sticky top-0 z-30 border-b border-slate-200">
+  <header class="glass-header sticky top-0 z-30 border-b border-emerald-500/20">
     <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-1.5 sm:gap-4 overflow-hidden">
       
       <!-- Brand & Tagline -->
       <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-        <img src="assets/logo/taralets-icon.svg" alt="TaraLets Logo" class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl shadow-md shadow-emerald-950/20 hover:scale-105 transition transform cursor-pointer shrink-0">
+        <img src="assets/logo/taralets-icon.svg" alt="TaraLets Logo" class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl shadow-md shadow-emerald-950/40 hover:scale-105 transition transform cursor-pointer shrink-0">
         <div>
           <div class="flex items-center gap-1.5 sm:gap-2">
-            <span class="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900">Tara<span class="text-emerald-600">Lets</span></span>
-            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+            <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white header-brand-text">Tara<span class="text-emerald-400">Lets</span></span>
+            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
               Work Commute
             </span>
           </div>
-          <p class="text-[11px] text-slate-500 hidden sm:block">Driver-Initiated Workplace Ride Sharing</p>
+          <p class="text-[11px] text-emerald-200/80 hidden sm:block">Driver-Initiated Workplace Ride Sharing</p>
         </div>
       </div>
 
@@ -102,7 +102,7 @@
         </div>
 
         <!-- Current User Avatar Pill -->
-        <div class="flex items-center gap-1.5 sm:gap-2.5 bg-white border border-slate-200 py-1 px-1.5 sm:px-2.5 rounded-full shadow-sm">
+        <div id="current-user-avatar-pill" class="flex items-center gap-1.5 sm:gap-2.5 bg-white border border-slate-200 py-1 px-1.5 sm:px-2.5 rounded-full shadow-sm">
           <img id="current-user-avatar" src="" alt="Avatar" class="w-7 h-7 rounded-full object-cover">
           <div class="hidden md:block text-left">
             <div id="current-user-name" class="text-xs font-bold text-slate-800 leading-none">Loading...</div>
@@ -130,6 +130,12 @@
           <span class="text-sm">📱</span>
           <span class="hidden sm:inline">Get Mobile Apps</span>
           <span class="sm:hidden text-[11px]">QR Apps</span>
+        </button>
+
+        <!-- Logo Theme Switcher Button -->
+        <button id="btn-theme-toggle" onclick="window.taraletsApp.cycleTheme()" class="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-400/30 text-emerald-200 rounded-xl text-xs font-bold transition shadow-2xs" title="Switch Theme (Logo Forest Emerald / Logo Mint / Logo Midnight)">
+          <span id="theme-icon">🌲</span>
+          <span class="hidden xl:inline text-[11px]" id="theme-label">Logo Theme</span>
         </button>
 
         <!-- Reset Seed Data Button -->
@@ -458,7 +464,7 @@
   </main>
 
   <!-- ================= FOOTER ================= -->
-  <footer class="bg-white border-t border-slate-200 py-5 mt-auto">
+  <footer class="app-footer py-5 mt-auto transition-colors">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
       <div class="flex items-center gap-2">
         <strong class="text-slate-800">TaraLets Commute</strong> — Driver-First Workplace Carpooling & Motorcycle Pooling
