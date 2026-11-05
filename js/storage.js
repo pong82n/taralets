@@ -178,6 +178,59 @@ class StorageService {
     return passengerData;
   }
 
+  isCommuterOnlyMode() {
+    return localStorage.getItem('taralets_commuter_only') === 'true';
+  }
+
+  setCommuterOnlyMode(isLocked) {
+    if (isLocked) {
+      localStorage.setItem('taralets_commuter_only', 'true');
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_USER_ROLE, 'passenger');
+    } else {
+      localStorage.removeItem('taralets_commuter_only');
+    }
+    window.dispatchEvent(new CustomEvent('taralets:role-changed', { detail: { role: 'passenger', commuterOnly: !!isLocked } }));
+  }
+
+  registerPassenger(data) {
+    const id = "pax-" + Date.now();
+    const hubs = this.getWorkplaceHubs();
+    const hub = hubs.find(h => h.id === data.workplaceId) || hubs[0];
+
+    const hubLat = hub.lat || 14.5518;
+    const hubLng = hub.lng || 121.0494;
+
+    const newPassenger = {
+      id,
+      name: data.name ? data.name.trim() : "Office Commuter",
+      avatar: data.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      phone: data.phone ? data.phone.trim() : "0917-000-0000",
+      email: data.email ? data.email.trim() : `${(data.name || 'commuter').toLowerCase().replace(/[^a-z0-9]/g, '.')}@${(data.company || 'corp').toLowerCase().replace(/[^a-z0-9]/g, '')}.ph`,
+      workplaceId: data.workplaceId || hub.id,
+      company: data.company ? data.company.trim() : hub.name,
+      jobTitle: data.jobTitle ? data.jobTitle.trim() : "Verified Professional",
+      employeeBadgeId: data.employeeBadgeId ? data.employeeBadgeId.trim() : `#EMP-${Math.floor(1000 + Math.random() * 9000)}`,
+      workSchedule: data.workSchedule || "08:00 AM - 05:00 PM",
+      pickupLocation: data.pickupLocation ? data.pickupLocation.trim() : "Designated Meeting Landmark",
+      pickupLat: data.pickupLat || (hubLat - 0.05),
+      pickupLng: data.pickupLng || (hubLng - 0.02),
+      vehiclePreference: data.vehiclePreference || "any",
+      preferredPaymentMode: data.preferredPaymentMode || "gcash",
+      status: "looking",
+      walletBalance: 500.00,
+      willingToShareFare: true,
+      bio: data.bio || `Daily commuter heading to ${data.company || hub.name}. Verified and punctual co-worker.`,
+      registeredAt: new Date().toISOString()
+    };
+
+    this.savePassenger(newPassenger);
+    this.setCurrentPassengerId(newPassenger.id);
+    this.setCommuterOnlyMode(true);
+    this.setActiveRole('passenger');
+    window.dispatchEvent(new CustomEvent('taralets:passenger-registered', { detail: newPassenger }));
+    return newPassenger;
+  }
+
   // --- Trips ---
   getTrips() {
     const raw = localStorage.getItem(STORAGE_KEYS.TRIPS);

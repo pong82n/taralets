@@ -30,11 +30,17 @@ class TaraLetsApp {
       const roleParam = params.get('role');
       const actionParam = params.get('action');
 
+      if (params.get('commuter_only') === 'true') {
+        storage.setCommuterOnlyMode(true);
+      }
+
       if (roleParam === 'driver' || roleParam === 'passenger') {
         storage.setActiveRole(roleParam);
       }
 
-      if (actionParam === 'wallet') {
+      if (actionParam === 'signup' || actionParam === 'register') {
+        setTimeout(() => this.openPassengerSignupModal(), 400);
+      } else if (actionParam === 'wallet') {
         setTimeout(() => this.openPaymentCenterModal(), 400);
       } else if (actionParam === 'install' || actionParam === 'qr') {
         setTimeout(() => this.openAppDownloadModal(), 400);
@@ -172,7 +178,19 @@ class TaraLetsApp {
       topupForm.addEventListener('submit', (e) => this.handleWalletTopupSubmit(e));
     }
 
+    // Passenger Sign-Up Form
+    const signupForm = document.getElementById('form-passenger-signup');
+    if (signupForm) {
+      signupForm.addEventListener('submit', (e) => this.handlePassengerSignupSubmit(e));
+    }
+
     // Global custom events
+    window.addEventListener('taralets:passenger-registered', (e) => {
+      this.showToast(`🎉 Welcome to TaraLets, ${e.detail.name}! Commuter Mode enabled.`, "success");
+      this.syncActiveRoleUI();
+      this.render();
+    });
+
     window.addEventListener('taralets:role-changed', () => {
       this.syncActiveRoleUI();
       this.render();
@@ -225,8 +243,29 @@ class TaraLetsApp {
   }
 
   syncActiveRoleUI() {
-    const activeRole = storage.getActiveRole();
-    const isDriver = activeRole === 'driver';
+    const isCommuterOnly = storage.isCommuterOnlyMode();
+    const activeRole = isCommuterOnly ? 'passenger' : storage.getActiveRole();
+    const isDriver = !isCommuterOnly && activeRole === 'driver';
+
+    const normalRoleSwitcher = document.getElementById('nav-role-switcher');
+    const commuterOnlyBadge = document.getElementById('nav-commuter-only-badge');
+    const driverSelectContainer = document.getElementById('driver-user-select-container');
+
+    if (isCommuterOnly) {
+      if (normalRoleSwitcher) normalRoleSwitcher.classList.add('hidden');
+      if (commuterOnlyBadge) {
+        commuterOnlyBadge.classList.remove('hidden');
+        commuterOnlyBadge.classList.add('flex');
+      }
+      if (driverSelectContainer) driverSelectContainer.classList.add('hidden');
+    } else {
+      if (normalRoleSwitcher) normalRoleSwitcher.classList.remove('hidden');
+      if (commuterOnlyBadge) {
+        commuterOnlyBadge.classList.add('hidden');
+        commuterOnlyBadge.classList.remove('flex');
+      }
+      if (driverSelectContainer) driverSelectContainer.classList.remove('hidden');
+    }
 
     document.querySelectorAll('.role-switcher-btn').forEach(btn => {
       const role = btn.dataset.role;
@@ -255,7 +294,10 @@ class TaraLetsApp {
     const mobileIcon = document.getElementById('mobile-tab-role-icon');
     const mobileLabel = document.getElementById('mobile-tab-role-label');
     if (mobileIcon && mobileLabel) {
-      if (isDriver) {
+      if (isCommuterOnly) {
+        mobileIcon.textContent = '🚶';
+        mobileLabel.textContent = 'Commuter Mode';
+      } else if (isDriver) {
         mobileIcon.textContent = '🚶';
         mobileLabel.textContent = 'Switch to Commuter';
       } else {
@@ -268,10 +310,81 @@ class TaraLetsApp {
   }
 
   toggleRole() {
+    if (storage.isCommuterOnlyMode()) {
+      this.showToast("You are signed in as an Office Commuter. Tap '(Switch)' in the header if you need driver mode.", "info");
+      return;
+    }
     const currentRole = storage.getActiveRole();
     const newRole = currentRole === 'driver' ? 'passenger' : 'driver';
     storage.setActiveRole(newRole);
     this.showToast(`Switched to ${newRole === 'driver' ? '🚗 Driver' : '🚶 Commuter'} Mode!`, 'info');
+  }
+
+  exitCommuterOnlyMode() {
+    storage.setCommuterOnlyMode(false);
+    this.showToast("Exited Commuter-Only Mode. All driver & commuter controls now visible.", "info");
+    this.syncActiveRoleUI();
+    this.render();
+  }
+
+  openPassengerSignupModal() {
+    const modal = document.getElementById('modal-passenger-signup');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  handlePassengerSignupSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('signup-name').value;
+    const phone = document.getElementById('signup-phone').value;
+    const workplaceId = document.getElementById('signup-workplace-hub').value;
+    const company = document.getElementById('signup-company').value;
+    const email = document.getElementById('signup-email').value;
+    const jobTitle = document.getElementById('signup-job-title').value;
+    const employeeBadgeId = document.getElementById('signup-badge-id').value;
+    const pickupLocation = document.getElementById('signup-pickup').value;
+    const workSchedule = document.getElementById('signup-schedule').value;
+    const vehiclePreference = document.getElementById('signup-vehicle-pref').value;
+    const preferredPaymentMode = document.getElementById('signup-payment-mode').value;
+    const avatar = document.querySelector('input[name="signup-avatar"]:checked')?.value;
+
+    try {
+      const newPax = storage.registerPassenger({
+        name,
+        phone,
+        workplaceId,
+        company,
+        email,
+        jobTitle,
+        employeeBadgeId,
+        pickupLocation,
+        workSchedule,
+        vehiclePreference,
+        preferredPaymentMode,
+        avatar
+      });
+
+      const modal = document.getElementById('modal-passenger-signup');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      const form = document.getElementById('form-passenger-signup');
+      if (form) form.reset();
+
+      this.showToast(`🎉 Welcome ${newPax.name}! Commuter Mode enabled. Request your ride below!`, "success");
+      this.syncActiveRoleUI();
+      this.render();
+
+      setTimeout(() => {
+        this.scrollToSection('passenger-matching-drivers');
+      }, 350);
+
+    } catch (err) {
+      this.showToast(err.message, "error");
+    }
   }
 
   scrollToSection(id) {
@@ -756,6 +869,56 @@ class TaraLetsApp {
 
   renderPassengerDashboard() {
     const currentPax = storage.getCurrentPassenger();
+    const isCommuterOnly = storage.isCommuterOnlyMode();
+
+    // Render Welcome Banner
+    const bannerContainer = document.getElementById('passenger-welcome-banner');
+    if (bannerContainer) {
+      const matchTrips = getMatchingTripsForPassenger(currentPax);
+      bannerContainer.innerHTML = `
+        <div class="bg-gradient-to-r ${isCommuterOnly ? 'from-blue-700 via-indigo-700 to-blue-800' : 'from-slate-800 to-blue-900'} text-white p-5 rounded-2xl shadow-md border border-blue-600/30 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-start sm:items-center gap-3.5">
+              <img src="${currentPax.avatar}" alt="${currentPax.name}" class="w-14 h-14 rounded-2xl object-cover border-2 border-white/40 shadow-sm shrink-0">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h2 class="text-base sm:text-lg font-extrabold text-white">Welcome, ${currentPax.name}!</h2>
+                  <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 uppercase tracking-wide">
+                    ✓ Verified Commuter
+                  </span>
+                </div>
+                <p class="text-xs text-blue-100 font-medium mt-0.5">
+                  🏢 <strong>${currentPax.company}</strong> (${currentPax.jobTitle || 'Verified Employee'}) • Shift: <strong>${currentPax.workSchedule || '08:00 AM - 05:00 PM'}</strong>
+                </p>
+                <p class="text-[11px] text-blue-200 mt-0.5">
+                  📍 Pickup Area: <strong>${currentPax.pickupLocation}</strong> • Badge: <span class="font-mono bg-white/20 px-1.5 py-0.2 rounded">${currentPax.employeeBadgeId || '#EMP-ID'}</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-white/10">
+              <span class="text-[10px] uppercase font-bold tracking-wider text-blue-200">
+                ${isCommuterOnly ? '🔒 Commuter Mode Only' : '🚶 Commuter Station'}
+              </span>
+              <button onclick="window.taraletsApp.openPassengerSignupModal()" class="text-xs bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                <span>📝</span>
+                <span>Edit / New Profile</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-3 border-t border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-blue-100">
+            <p>
+              ✨ <strong>Ready for work?</strong> Below are active drivers commuting along your corridor to <strong>${currentPax.company}</strong>. Tap <strong>"Request a Ride to Driver"</strong> to reserve your seat!
+            </p>
+            <button onclick="window.taraletsApp.scrollToSection('passenger-matching-drivers')" class="underline font-bold text-white hover:text-blue-200 shrink-0">
+              View ${matchTrips.length} Available Route(s) ↓
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
     const myBookings = storage.getBookings().filter(b => b.passengerId === currentPax.id);
     const container = document.getElementById('passenger-incoming-bookings');
 
@@ -914,9 +1077,9 @@ class TaraLetsApp {
                 return `
                   <div class="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                     <span class="text-[11px] text-slate-500">${t.totalSeats - (t.bookedSeats || 0)} seat(s) available</span>
-                    <button onclick="window.taraletsApp.openPassengerRequestModal('${t.id}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center gap-1">
+                    <button onclick="window.taraletsApp.openPassengerRequestModal('${t.id}')" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
                       <span>🎟️</span>
-                      <span>Request to Book Seat</span>
+                      <span>Request a Ride to Driver</span>
                     </button>
                   </div>
                 `;
@@ -1173,7 +1336,7 @@ class TaraLetsApp {
 
     document.getElementById('req-modal-pickup-input').value = currentPax.pickupLocation || '';
     document.getElementById('req-modal-verification-company').textContent = `${currentPax.company} (ID Verified)`;
-    document.getElementById('req-modal-verification-email').textContent = `${currentPax.name.toLowerCase().replace(/[^a-z]/g, '.')}@${currentPax.company.toLowerCase().includes('google') ? 'google.com' : currentPax.company.toLowerCase().includes('shopee') ? 'shopee.com' : 'corp.ph'}`;
+    document.getElementById('req-modal-verification-email').textContent = currentPax.email || `${currentPax.name.toLowerCase().replace(/[^a-z]/g, '.')}@${currentPax.company.toLowerCase().includes('google') ? 'google.com' : currentPax.company.toLowerCase().includes('shopee') ? 'shopee.com' : 'corp.ph'}`;
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -1427,6 +1590,7 @@ class TaraLetsApp {
 }
 
 // Global exposure
+window.storage = storage;
 window.taraletsApp = new TaraLetsApp();
 window.chatManager = chatManager;
 
