@@ -2,7 +2,7 @@
  * TaraLets Service Worker for Mobile & Tablet PWA Support
  */
 
-const CACHE_NAME = 'taralets-cache-v2';
+const CACHE_NAME = 'taralets-cache-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -16,7 +16,9 @@ const ASSETS_TO_CACHE = [
   '/assets/logo/taralets-full-logo.svg',
   '/assets/logo/favicon.svg',
   '/assets/qr/qr-driver-app.svg',
-  '/assets/qr/qr-passenger-app.svg'
+  '/assets/qr/qr-driver-app.png',
+  '/assets/qr/qr-passenger-app.svg',
+  '/assets/qr/qr-passenger-app.png'
 ];
 
 self.addEventListener('install', (event) => {

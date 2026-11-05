@@ -125,10 +125,11 @@
           <span>Payment Center</span>
         </button>
 
-        <!-- Mobile Apps QR Codes Button (Hidden on mobile phones to fit screen) -->
-        <button onclick="window.taraletsApp.openAppDownloadModal()" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-sm" title="Scan QR Code to Install Driver or Passenger Mobile Apps">
-          <span>📱</span>
-          <span>Get Mobile Apps</span>
+        <!-- Mobile Apps QR Codes Button (Visible on mobile, tablet & desktop) -->
+        <button onclick="window.taraletsApp.openAppDownloadModal()" class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white rounded-xl text-xs font-extrabold transition shadow-sm shrink-0" title="Scan QR Code to Install Driver or Passenger Mobile Apps">
+          <span class="text-sm">📱</span>
+          <span class="hidden sm:inline">Get Mobile Apps</span>
+          <span class="sm:hidden text-[11px]">QR Apps</span>
         </button>
 
         <!-- Reset Seed Data Button -->
@@ -237,6 +238,39 @@
 
             <div id="driver-active-bookings-list">
               <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Driver Mobile App Installation & QR Card (Always Visible on Page) -->
+          <div class="bg-gradient-to-br from-slate-900 to-emerald-950 text-white p-4 rounded-2xl border border-emerald-500/30 shadow-md">
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider border border-emerald-400/30">
+                🚗 Driver Mobile App
+              </span>
+              <span class="text-[10px] text-emerald-200 font-bold">PWA Install</span>
+            </div>
+            
+            <h3 class="font-extrabold text-sm text-white">Scan or Install on Mobile</h3>
+            <p class="text-[11px] text-emerald-200/80 mt-0.5 leading-snug">
+              Vehicle owners: post trips, verify passengers &amp; split gas expenses on your phone
+            </p>
+            
+            <div class="flex items-center gap-3 my-3 bg-white/10 p-2.5 rounded-xl border border-white/10">
+              <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white p-1.5 rounded-xl border border-emerald-300 shadow-sm shrink-0 flex items-center justify-center">
+                <img src="assets/qr/qr-driver-app.svg" onerror="this.onerror=null; this.src='assets/qr/qr-driver-app.png'" alt="TaraLets Driver App QR Code" class="w-full h-full object-contain">
+              </div>
+              <div class="flex-1 min-w-0 space-y-1.5">
+                <div class="text-[10px] text-emerald-300 font-bold">Point phone camera to scan:</div>
+                <div class="text-[9px] font-mono text-slate-300 truncate bg-black/30 px-2 py-1 rounded">.../?role=driver</div>
+                <button type="button" onclick="window.taraletsApp.copyTextToClipboard('https://taralets-tawny.vercel.app/?role=driver', 'Driver App link copied!')" class="w-full py-1 px-2 bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 font-bold text-[10px] rounded-lg transition border border-emerald-700/60 flex items-center justify-center gap-1">
+                  <span>📋</span>
+                  <span>Copy Driver Link</span>
+                </button>
+                <button type="button" onclick="window.taraletsApp.installPwaApp('driver')" class="w-full py-1.5 px-2 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-emerald-950 font-black text-[11px] rounded-lg shadow transition flex items-center justify-center gap-1.5">
+                  <span>📲</span>
+                  <span>Install on this Device</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -358,6 +392,43 @@
       <!-- Dynamic Commuter Welcome & Verification Status Banner -->
       <div id="passenger-welcome-banner">
         <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Commuter Mobile App Installation & QR Card (Always Visible on Page) -->
+      <div class="bg-gradient-to-br from-slate-900 to-blue-950 text-white p-4 rounded-2xl border border-blue-500/30 shadow-md">
+        <div class="flex items-center justify-between mb-2">
+          <span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-black uppercase tracking-wider border border-blue-400/30">
+            🚶 Commuter Mobile App
+          </span>
+          <span class="text-[10px] text-blue-200 font-bold">PWA Install</span>
+        </div>
+        
+        <div class="space-y-1">
+          <h3 class="font-extrabold text-sm text-white">Scan QR Code or Install Commuter App</h3>
+          <p class="text-[11px] text-blue-200/80 leading-snug">
+            Find colleagues heading to your workplace, request rides, and coordinate pickups directly from your smartphone.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 mt-3 bg-white/10 p-2.5 rounded-xl border border-white/10">
+          <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white p-1.5 rounded-xl border border-blue-300 shadow-sm shrink-0 flex items-center justify-center">
+            <img src="assets/qr/qr-passenger-app.svg" onerror="this.onerror=null; this.src='assets/qr/qr-passenger-app.png'" alt="TaraLets Passenger App QR Code" class="w-full h-full object-contain">
+          </div>
+          <div class="flex-1 min-w-0 space-y-1.5">
+            <div class="text-[10px] text-blue-300 font-bold">Point phone camera to scan:</div>
+            <div class="text-[9px] font-mono text-slate-300 truncate bg-black/30 px-2 py-1 rounded">.../?role=passenger</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              <button type="button" onclick="window.taraletsApp.copyTextToClipboard('https://taralets-tawny.vercel.app/?role=passenger', 'Passenger App link copied!')" class="py-1 px-2 bg-blue-900/80 hover:bg-blue-800 text-blue-200 font-bold text-[10px] rounded-lg transition border border-blue-700/60 flex items-center justify-center gap-1">
+                <span>📋</span>
+                <span>Copy Commuter Link</span>
+              </button>
+              <button type="button" onclick="window.taraletsApp.installPwaApp('passenger')" class="py-1.5 px-2 bg-blue-500 hover:bg-blue-400 active:scale-95 text-white font-black text-[11px] rounded-lg shadow transition flex items-center justify-center gap-1.5">
+                <span>📲</span>
+                <span>Install on this Device</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1053,7 +1124,7 @@
             <p class="text-[11px] text-slate-500 mt-0.5">Car &amp; Motorcycle Commute Drivers</p>
             
             <div class="my-4 w-48 h-48 sm:w-52 sm:h-52 bg-white p-3 rounded-2xl border-2 border-emerald-200 shadow-md flex items-center justify-center">
-              <img src="assets/qr/qr-driver-app.svg" alt="TaraLets Driver App QR Code" class="w-full h-full object-contain">
+              <img src="assets/qr/qr-driver-app.svg" onerror="this.onerror=null; this.src='assets/qr/qr-driver-app.png'" alt="TaraLets Driver App QR Code" class="w-full h-full object-contain">
             </div>
 
             <p class="text-[10px] text-emerald-800 font-bold mb-2">
@@ -1094,7 +1165,7 @@
             <p class="text-[11px] text-slate-500 mt-0.5">Colleagues &amp; Office Workers</p>
             
             <div class="my-4 w-48 h-48 sm:w-52 sm:h-52 bg-white p-3 rounded-2xl border-2 border-blue-200 shadow-md flex items-center justify-center">
-              <img src="assets/qr/qr-passenger-app.svg" alt="TaraLets Passenger App QR Code" class="w-full h-full object-contain">
+              <img src="assets/qr/qr-passenger-app.svg" onerror="this.onerror=null; this.src='assets/qr/qr-passenger-app.png'" alt="TaraLets Passenger App QR Code" class="w-full h-full object-contain">
             </div>
 
             <p class="text-[10px] text-blue-800 font-bold mb-2">
@@ -1650,37 +1721,43 @@
   </div>
 
   <!-- ================= MOBILE & TABLET BOTTOM APP BAR ================= -->
-  <nav class="glass-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 px-2 py-1 safe-bottom-nav lg:hidden">
-    <div class="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
+  <nav class="glass-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 px-1.5 py-1 safe-bottom-nav lg:hidden">
+    <div class="max-w-md mx-auto grid grid-cols-6 gap-0.5 text-center">
       
       <!-- Role Toggle Tab -->
-      <button id="mobile-tab-role" onclick="window.taraletsApp.toggleRole()" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Toggle Driver or Commuter Mode">
-        <span class="text-xl leading-none" id="mobile-tab-role-icon">🚗</span>
-        <span class="text-[9px] font-extrabold mt-1 tracking-tight truncate max-w-full" id="mobile-tab-role-label">Mode</span>
+      <button id="mobile-tab-role" onclick="window.taraletsApp.toggleRole()" class="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Toggle Driver or Commuter Mode">
+        <span class="text-lg leading-none" id="mobile-tab-role-icon">🚗</span>
+        <span class="text-[9px] font-extrabold mt-0.5 tracking-tight truncate max-w-full" id="mobile-tab-role-label">Mode</span>
       </button>
 
       <!-- Live Map Tab -->
-      <button onclick="window.taraletsApp.scrollToSection('commute-map-card')" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Jump to Map">
-        <span class="text-xl leading-none">🗺️</span>
-        <span class="text-[9px] font-extrabold mt-1 tracking-tight">Live Map</span>
+      <button onclick="window.taraletsApp.scrollToSection('commute-map-card')" class="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Jump to Map">
+        <span class="text-lg leading-none">🗺️</span>
+        <span class="text-[9px] font-extrabold mt-0.5 tracking-tight">Map</span>
       </button>
 
       <!-- Trips / Matching Radar Tab -->
-      <button onclick="window.taraletsApp.scrollToSection('trips-radar-card')" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="View Trips & Routes">
-        <span class="text-xl leading-none">📋</span>
-        <span class="text-[9px] font-extrabold mt-1 tracking-tight">Trips</span>
+      <button onclick="window.taraletsApp.scrollToSection('trips-radar-card')" class="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="View Trips & Routes">
+        <span class="text-lg leading-none">📋</span>
+        <span class="text-[9px] font-extrabold mt-0.5 tracking-tight">Trips</span>
+      </button>
+
+      <!-- App QR & Install Tab (Instant access to Mobile App QR Code & Install) -->
+      <button onclick="window.taraletsApp.openAppDownloadModal()" class="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-emerald-800 hover:text-emerald-950 bg-emerald-50 active:scale-95 transition" title="Mobile App QR Code & Installation">
+        <span class="text-lg leading-none">📱</span>
+        <span class="text-[9px] font-black mt-0.5 tracking-tight text-emerald-800">App QR</span>
       </button>
 
       <!-- Commute Wallet & Pay Tab -->
-      <button onclick="window.taraletsApp.openPaymentCenterModal()" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Open Payment Center & Wallet">
-        <span class="text-xl leading-none">👛</span>
-        <span class="text-[9px] font-extrabold mt-1 tracking-tight">Wallet</span>
+      <button onclick="window.taraletsApp.openPaymentCenterModal()" class="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-slate-700 hover:text-emerald-600 active:scale-95 transition" title="Open Payment Center & Wallet">
+        <span class="text-lg leading-none">👛</span>
+        <span class="text-[9px] font-extrabold mt-0.5 tracking-tight">Wallet</span>
       </button>
 
       <!-- Commuter Account / Log-In / Log-Out Tab -->
-      <button id="mobile-tab-account" onclick="window.taraletsApp.handleMobileAccountTab()" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-700 hover:text-blue-600 active:scale-95 transition" title="Commuter Account">
-        <span class="text-xl leading-none" id="mobile-tab-account-icon">🔑</span>
-        <span class="text-[9px] font-extrabold mt-1 tracking-tight" id="mobile-tab-account-label">Log In</span>
+      <button id="mobile-tab-account" onclick="window.taraletsApp.handleMobileAccountTab()" class="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-slate-700 hover:text-blue-600 active:scale-95 transition" title="Commuter Account">
+        <span class="text-lg leading-none" id="mobile-tab-account-icon">🔑</span>
+        <span class="text-[9px] font-extrabold mt-0.5 tracking-tight" id="mobile-tab-account-label">Log In</span>
       </button>
 
     </div>
