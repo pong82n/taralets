@@ -189,7 +189,10 @@ class TaraLetsApp {
     // Passenger Log-In Form
     const loginForm = document.getElementById('form-passenger-login');
     if (loginForm) {
-      loginForm.addEventListener('submit', (e) => this.handlePassengerLoginSubmit(e));
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.sendLoginOtp();
+      });
     }
 
     // Global custom events
@@ -425,9 +428,15 @@ class TaraLetsApp {
   openPassengerLoginModal() {
     const modal = document.getElementById('modal-passenger-login');
     if (!modal) return;
+    this.backToPhoneStep();
     this.renderLoginSavedCommuters();
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    this.setupOtpInputListeners();
+    setTimeout(() => {
+      const phoneInput = document.getElementById('login-phone');
+      if (phoneInput) phoneInput.focus();
+    }, 200);
   }
 
   closePassengerLoginModal() {
@@ -435,6 +444,14 @@ class TaraLetsApp {
     if (!modal) return;
     modal.classList.add('hidden');
     modal.classList.remove('flex');
+  }
+
+  backToPhoneStep() {
+    const stepPhone = document.getElementById('login-step-phone');
+    const stepOtp = document.getElementById('login-step-otp');
+    if (stepPhone) stepPhone.classList.remove('hidden');
+    if (stepOtp) stepOtp.classList.add('hidden');
+    document.querySelectorAll('.otp-box').forEach(b => b.value = '');
   }
 
   switchToSignupFromLogin() {
@@ -451,21 +468,92 @@ class TaraLetsApp {
     this.openPassengerLoginModal();
   }
 
-  handlePassengerLoginSubmit(e) {
-    e.preventDefault();
-    const input = document.getElementById('login-identifier');
-    if (!input) return;
-    const value = input.value.trim();
-    if (!value) {
-      this.showToast("Please enter your registered phone number or work email.", "error");
+  sendLoginOtp(phoneOverride) {
+    let phone = phoneOverride;
+    if (!phone) {
+      const input = document.getElementById('login-phone');
+      phone = input ? input.value : '';
+    }
+
+    try {
+      const res = storage.sendMobileLoginVerification(phone);
+      
+      const stepPhone = document.getElementById('login-step-phone');
+      const stepOtp = document.getElementById('login-step-otp');
+      const phoneDisplay = document.getElementById('otp-phone-display');
+      const codePreview = document.getElementById('otp-code-preview');
+
+      if (phoneDisplay) phoneDisplay.textContent = res.phone;
+      if (codePreview) codePreview.textContent = res.code;
+
+      if (stepPhone) stepPhone.classList.add('hidden');
+      if (stepOtp) stepOtp.classList.remove('hidden');
+
+      // Clear previous OTP boxes and focus first
+      document.querySelectorAll('.otp-box').forEach(b => b.value = '');
+      const firstBox = document.querySelector('.otp-box[data-idx="0"]');
+      if (firstBox) setTimeout(() => firstBox.focus(), 150);
+
+      this.showToast(`📲 SMS Sent: Your verification code is ${res.code}`, "info");
+    } catch (err) {
+      this.showToast(err.message, "error");
+    }
+  }
+
+  resendLoginOtp() {
+    const phoneDisplay = document.getElementById('otp-phone-display');
+    const phone = phoneDisplay ? phoneDisplay.textContent : '';
+    if (!phone) {
+      this.backToPhoneStep();
+      return;
+    }
+    try {
+      const res = storage.sendMobileLoginVerification(phone);
+      const codePreview = document.getElementById('otp-code-preview');
+      if (codePreview) codePreview.textContent = res.code;
+      this.showToast(`📲 New SMS code sent: ${res.code}`, "info");
+      document.querySelectorAll('.otp-box').forEach(b => b.value = '');
+      const firstBox = document.querySelector('.otp-box[data-idx="0"]');
+      if (firstBox) firstBox.focus();
+    } catch (err) {
+      this.showToast(err.message, "error");
+    }
+  }
+
+  autoFillOtp() {
+    const preview = document.getElementById('otp-code-preview');
+    const code = preview ? preview.textContent.trim() : '1234';
+    const boxes = document.querySelectorAll('.otp-box');
+    for (let i = 0; i < boxes.length; i++) {
+      boxes[i].value = code[i] || '';
+    }
+    this.verifyLoginOtp();
+  }
+
+  verifyLoginOtp() {
+    const phoneDisplay = document.getElementById('otp-phone-display');
+    const phone = phoneDisplay ? phoneDisplay.textContent.trim() : '';
+    const boxes = Array.from(document.querySelectorAll('.otp-box'));
+    const code = boxes.map(b => b.value.trim()).join('');
+
+    if (code.length < 4) {
+      this.showToast("Please enter the complete 4-digit verification code.", "error");
+      const emptyBox = boxes.find(b => !b.value.trim()) || boxes[0];
+      if (emptyBox) emptyBox.focus();
       return;
     }
 
     try {
-      const user = storage.loginPassenger(value);
+      const result = storage.verifyMobileLoginCode(phone, code);
       this.closePassengerLoginModal();
-      input.value = '';
-      this.showToast(`🎉 Welcome back, ${user.name}! Commuter Mode enabled.`, "success");
+      
+      const pax = result.passenger;
+      if (result.isNew) {
+        this.showToast(`🎉 Mobile number verified! Welcome to TaraLets Commuter, ${pax.name}!`, "success");
+      } else {
+        this.showToast(`🎉 Mobile verified! Welcome back, ${pax.name} (${pax.company}).`, "success");
+      }
+
       this.syncActiveRoleUI();
       this.render();
       setTimeout(() => this.scrollToSection('passenger-welcome-banner'), 300);
@@ -474,16 +562,65 @@ class TaraLetsApp {
     }
   }
 
+  setupOtpInputListeners() {
+    const boxes = document.querySelectorAll('.otp-box');
+    boxes.forEach((box, idx) => {
+      box.oninput = () => {
+        const val = box.value.replace(/[^0-9]/g, '');
+        box.value = val.slice(-1);
+        if (box.value && idx < boxes.length - 1) {
+          boxes[idx + 1].focus();
+        }
+        const fullCode = Array.from(boxes).map(b => b.value).join('');
+        if (fullCode.length === 4) {
+          setTimeout(() => this.verifyLoginOtp(), 250);
+        }
+      };
+
+      box.onkeydown = (e) => {
+        if (e.key === 'Backspace' && !box.value && idx > 0) {
+          boxes[idx - 1].focus();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          this.verifyLoginOtp();
+        }
+      };
+
+      box.onpaste = (e) => {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+        if (pasted.length >= 4) {
+          for (let i = 0; i < 4; i++) {
+            boxes[i].value = pasted[i] || '';
+          }
+          boxes[3].focus();
+          setTimeout(() => this.verifyLoginOtp(), 200);
+        }
+      };
+    });
+  }
+
+  quickSelectCommuterPhone(phone) {
+    const input = document.getElementById('login-phone');
+    if (input) input.value = phone;
+    this.sendLoginOtp(phone);
+  }
+
   quickLoginPassenger(paxId) {
-    try {
-      const user = storage.loginPassenger(paxId);
-      this.closePassengerLoginModal();
-      this.showToast(`🎉 Welcome back, ${user.name}! Commuter Mode enabled.`, "success");
-      this.syncActiveRoleUI();
-      this.render();
-      setTimeout(() => this.scrollToSection('passenger-welcome-banner'), 300);
-    } catch (err) {
-      this.showToast(err.message, "error");
+    const pax = storage.getPassengerById(paxId);
+    if (pax && pax.phone) {
+      this.quickSelectCommuterPhone(pax.phone);
+    } else {
+      try {
+        const user = storage.loginPassenger(paxId);
+        this.closePassengerLoginModal();
+        this.showToast(`🎉 Welcome back, ${user.name}! Commuter Mode enabled.`, "success");
+        this.syncActiveRoleUI();
+        this.render();
+        setTimeout(() => this.scrollToSection('passenger-welcome-banner'), 300);
+      } catch (err) {
+        this.showToast(err.message, "error");
+      }
     }
   }
 
@@ -494,7 +631,7 @@ class TaraLetsApp {
     const currentPax = storage.getCurrentPassenger();
 
     container.innerHTML = passengers.map(p => `
-      <div onclick="window.taraletsApp.quickLoginPassenger('${p.id}')"
+      <div onclick="window.taraletsApp.quickSelectCommuterPhone('${p.phone}')"
         class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/60 cursor-pointer transition active:scale-[0.98]">
         <div class="flex items-center gap-2.5 min-w-0">
           <img src="${p.avatar}" alt="${p.name}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0">
@@ -503,11 +640,12 @@ class TaraLetsApp {
               <span class="truncate">${p.name}</span>
               ${p.id === currentPax.id ? '<span class="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-semibold shrink-0">Current</span>' : ''}
             </div>
-            <div class="text-[10px] text-slate-500 truncate">${p.company} • ${p.phone}</div>
+            <div class="text-[10px] text-slate-500 truncate">${p.company} • <span class="font-mono text-blue-700 font-semibold">${p.phone}</span></div>
           </div>
         </div>
-        <button type="button" class="ml-2 px-2.5 py-1 text-[11px] font-bold bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg shrink-0">
-          Log In
+        <button type="button" class="ml-2 px-2.5 py-1 text-[11px] font-bold bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg shrink-0 flex items-center gap-1">
+          <span>Verify</span>
+          <span>→</span>
         </button>
       </div>
     `).join('');

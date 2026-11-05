@@ -198,6 +198,113 @@ class StorageService {
     return localStorage.getItem('taralets_passenger_logged_in') === 'true';
   }
 
+  normalizePhoneNumber(phone) {
+    if (!phone) return '';
+    let digits = phone.replace(/[^0-9]/g, '');
+    if (digits.startsWith('63') && digits.length >= 12) {
+      digits = '0' + digits.substring(2);
+    }
+    if (digits.length === 10 && digits.startsWith('9')) {
+      digits = '0' + digits;
+    }
+    if (digits.length === 11 && digits.startsWith('09')) {
+      return `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+    }
+    return phone.trim();
+  }
+
+  sendMobileLoginVerification(phoneInput) {
+    if (!phoneInput || !phoneInput.trim()) {
+      throw new Error('Please enter your mobile phone number.');
+    }
+    const cleanDigits = phoneInput.replace(/[^0-9]/g, '');
+    if (cleanDigits.length < 10) {
+      throw new Error('Please enter a valid 11-digit mobile number (e.g. 0917-123-4567).');
+    }
+    const formattedPhone = this.normalizePhoneNumber(phoneInput);
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Store pending verification in localStorage with 10-minute expiry
+    const verification = {
+      phone: formattedPhone,
+      cleanDigits,
+      code,
+      expiresAt: Date.now() + (10 * 60 * 1000)
+    };
+    localStorage.setItem('taralets_pending_mobile_verification', JSON.stringify(verification));
+
+    // Check if passenger already exists
+    const passengers = this.getPassengers();
+    const existing = passengers.find(p => {
+      const pDigits = (p.phone || '').replace(/[^0-9]/g, '');
+      return pDigits && (pDigits === cleanDigits || pDigits.endsWith(cleanDigits.slice(-9)) || cleanDigits.endsWith(pDigits.slice(-9)));
+    });
+
+    return {
+      phone: formattedPhone,
+      cleanDigits,
+      code,
+      isExisting: !!existing,
+      passenger: existing || null
+    };
+  }
+
+  verifyMobileLoginCode(phoneInput, codeInput) {
+    if (!codeInput || codeInput.trim().length < 4) {
+      throw new Error('Please enter the 4-digit SMS verification code.');
+    }
+    const cleanCode = codeInput.trim();
+    const rawPending = localStorage.getItem('taralets_pending_mobile_verification');
+    let valid = false;
+
+    // Allow demo master codes '1234' or '0000' or matching generated code
+    if (cleanCode === '1234' || cleanCode === '0000') {
+      valid = true;
+    } else if (rawPending) {
+      try {
+        const pending = JSON.parse(rawPending);
+        if (pending.code === cleanCode) {
+          valid = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!valid) {
+      throw new Error('Invalid verification code. Please check your SMS or use demo code 1234.');
+    }
+
+    localStorage.removeItem('taralets_pending_mobile_verification');
+    const cleanDigits = (phoneInput || '').replace(/[^0-9]/g, '');
+    const formattedPhone = this.normalizePhoneNumber(phoneInput);
+    const passengers = this.getPassengers();
+
+    let matched = passengers.find(p => {
+      const pDigits = (p.phone || '').replace(/[^0-9]/g, '');
+      return pDigits && (pDigits === cleanDigits || pDigits.endsWith(cleanDigits.slice(-9)) || cleanDigits.endsWith(pDigits.slice(-9)));
+    });
+
+    if (matched) {
+      this.setCurrentPassengerId(matched.id);
+      localStorage.setItem(STORAGE_KEYS.PASSENGER_LOGGED_IN, 'true');
+      this.setCommuterOnlyMode(true);
+      this.setActiveRole('passenger');
+      window.dispatchEvent(new CustomEvent('taralets:passenger-logged-in', { detail: matched }));
+      return { isNew: false, passenger: matched };
+    }
+
+    // Auto-register verified new commuter
+    const newPassenger = this.registerPassenger({
+      name: `Commuter (${formattedPhone.slice(-4)})`,
+      phone: formattedPhone,
+      company: 'Verified Corporate Commuter',
+      workplaceId: 'hub-bgc',
+      pickupLocation: 'Preferred Landmark',
+      status: 'looking'
+    });
+
+    return { isNew: true, passenger: newPassenger };
+  }
+
   loginPassenger(identifier) {
     if (!identifier) {
       throw new Error('Please enter your registered mobile phone number, email, or select an account.');

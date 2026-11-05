@@ -1463,7 +1463,7 @@
   </div>
 
   <!-- ======================================================= -->
-  <!-- MODAL 11: PASSENGER / COMMUTER LOG-IN MODAL             -->
+  <!-- MODAL 11: PASSENGER / COMMUTER LOG-IN MODAL (MOBILE OTP)  -->
   <!-- ======================================================= -->
   <div id="modal-passenger-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-2.5 sm:p-4">
     <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col transform transition-all">
@@ -1471,17 +1471,17 @@
       <!-- Modal Header -->
       <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 p-4 sm:p-5 text-white flex items-center justify-between shrink-0">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-2xl shadow-inner">
-            🔑
+          <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            📱
           </div>
           <div>
             <div class="flex items-center gap-2">
               <span class="text-[10px] uppercase tracking-wider font-extrabold bg-blue-500/40 px-2 py-0.5 rounded-full border border-blue-400/30">
-                Commuter Access
+                Mobile Log-In Verification
               </span>
             </div>
-            <h3 class="font-extrabold text-base mt-0.5">Commuter Log In</h3>
-            <p class="text-xs text-blue-200">Log in to book rides with verified colleagues</p>
+            <h3 class="font-extrabold text-base mt-0.5">Commuter Mobile Log In</h3>
+            <p class="text-xs text-blue-200">Verify your mobile phone number for secure access</p>
           </div>
         </div>
         <button data-close-modal="modal-passenger-login" class="text-white/80 hover:text-white p-1 rounded-lg">
@@ -1492,46 +1492,105 @@
       <!-- Modal Body -->
       <div class="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto touch-scroll">
         
-        <!-- Login Form -->
-        <form id="form-passenger-login" class="space-y-3">
+        <!-- ================= STEP 1: MOBILE NUMBER ================= -->
+        <div id="login-step-phone" class="space-y-4">
+          <form id="form-passenger-login" onsubmit="event.preventDefault(); window.taraletsApp.sendLoginOtp();" class="space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700">Enter Your Mobile Phone Number</label>
+                <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full">Step 1 of 2</span>
+              </div>
+              <div class="relative flex items-center">
+                <div class="absolute left-3 flex items-center gap-1.5 pointer-events-none text-slate-600 font-bold text-xs select-none">
+                  <span>🇵🇭</span>
+                  <span>+63</span>
+                  <span class="text-slate-300">|</span>
+                </div>
+                <input type="tel" id="login-phone" required
+                  placeholder="0917-000-0000 or 9171234567"
+                  class="w-full border border-slate-300 rounded-xl pl-20 pr-3 py-2.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">We will send a 4-digit verification code to verify your commuter identity</p>
+            </div>
+
+            <button type="submit" id="btn-send-login-otp" class="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <span>📲</span>
+              <span>Send Verification Code (SMS)</span>
+            </button>
+          </form>
+
+          <!-- Divider -->
+          <div class="relative flex py-1 items-center">
+            <div class="flex-grow border-t border-slate-200"></div>
+            <span class="flex-shrink mx-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Or 1-Tap Select Saved Profile</span>
+            <div class="flex-grow border-t border-slate-200"></div>
+          </div>
+
+          <!-- Saved Accounts List -->
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Mobile Phone Number or Work Email</label>
-            <input type="text" id="login-identifier" required
-              placeholder="e.g. 0917-555-0192 or miguel@bpo.com.ph"
-              class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-            <p class="text-[11px] text-slate-400 mt-1">Enter your registered mobile phone or work email address</p>
+            <div class="text-[11px] font-bold text-slate-600 mb-2 flex items-center justify-between">
+              <span>Registered Commuter Accounts:</span>
+              <span class="text-[10px] text-slate-400 font-normal">Tap to pre-fill mobile</span>
+            </div>
+            <div id="login-saved-commuters-list" class="space-y-2 max-h-48 overflow-y-auto touch-scroll pr-1">
+              <!-- Populated dynamically -->
+            </div>
           </div>
 
-          <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2">
-            <span>🔑</span>
-            <span>Log In to Commuter Mode</span>
-          </button>
-        </form>
-
-        <!-- Divider -->
-        <div class="relative flex py-1 items-center">
-          <div class="flex-grow border-t border-slate-200"></div>
-          <span class="flex-shrink mx-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Or 1-Tap Quick Log-In</span>
-          <div class="flex-grow border-t border-slate-200"></div>
-        </div>
-
-        <!-- Saved Accounts List -->
-        <div>
-          <div class="text-[11px] font-bold text-slate-600 mb-2 flex items-center justify-between">
-            <span>Registered Commuter Accounts:</span>
-            <span class="text-[10px] text-slate-400 font-normal">Tap to sign in</span>
-          </div>
-          <div id="login-saved-commuters-list" class="space-y-2 max-h-48 overflow-y-auto touch-scroll pr-1">
-            <!-- Populated dynamically -->
+          <!-- Switch to Sign Up -->
+          <div class="pt-3 border-t border-slate-100 text-center">
+            <span class="text-slate-500 text-xs">Don't have a commuter profile yet? </span>
+            <button type="button" onclick="window.taraletsApp.switchToSignupFromLogin()" class="font-extrabold text-blue-600 hover:text-blue-800 underline">
+              Sign Up as Commuter
+            </button>
           </div>
         </div>
 
-        <!-- Switch to Sign Up -->
-        <div class="pt-3 border-t border-slate-100 text-center">
-          <span class="text-slate-500 text-xs">Don't have a commuter profile yet? </span>
-          <button type="button" onclick="window.taraletsApp.switchToSignupFromLogin()" class="font-extrabold text-blue-600 hover:text-blue-800 underline">
-            Sign Up as Commuter
+        <!-- ================= STEP 2: VERIFICATION OTP CODE ================= -->
+        <div id="login-step-otp" class="hidden space-y-4">
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-center">
+            <span class="text-2xl block mb-1">💬</span>
+            <h4 class="font-extrabold text-blue-900 text-xs">Verification Code Sent!</h4>
+            <p class="text-[11px] text-blue-700 mt-0.5">
+              Enter the 4-digit SMS code sent to <strong id="otp-phone-display" class="font-bold text-blue-950 font-mono">09XX-XXX-XXXX</strong>
+            </p>
+            <div class="mt-2.5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold">
+              <span>Demo SMS Code:</span>
+              <span id="otp-code-preview" class="font-mono text-xs font-black tracking-widest bg-white text-blue-900 px-2 py-0.5 rounded shadow-2xs">----</span>
+              <button type="button" onclick="window.taraletsApp.autoFillOtp()" class="text-blue-700 hover:text-blue-900 underline ml-1 font-extrabold">
+                Auto-Fill
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block font-bold text-slate-700">Enter 4-Digit SMS Code</label>
+              <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">Step 2 of 2</span>
+            </div>
+            <div class="flex items-center justify-center gap-2.5 sm:gap-3 py-1">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-box w-12 h-12 text-center text-xl font-extrabold text-slate-800 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition" data-idx="0">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-box w-12 h-12 text-center text-xl font-extrabold text-slate-800 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition" data-idx="1">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-box w-12 h-12 text-center text-xl font-extrabold text-slate-800 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition" data-idx="2">
+              <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-box w-12 h-12 text-center text-xl font-extrabold text-slate-800 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition" data-idx="3">
+            </div>
+            <p class="text-[11px] text-slate-400 text-center mt-1.5">Didn't get the SMS? You can also use demo master code <strong class="text-slate-600 font-mono">1234</strong></p>
+          </div>
+
+          <button type="button" id="btn-verify-login-otp" onclick="window.taraletsApp.verifyLoginOtp()" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+            <span>✓</span>
+            <span>Verify &amp; Log In to Commuter Mode</span>
           </button>
+
+          <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <button type="button" onclick="window.taraletsApp.backToPhoneStep()" class="text-slate-500 hover:text-slate-800 font-bold flex items-center gap-1">
+              <span>←</span>
+              <span>Change Mobile</span>
+            </button>
+            <button type="button" id="btn-resend-otp" onclick="window.taraletsApp.resendLoginOtp()" class="text-blue-600 hover:text-blue-800 font-bold">
+              Resend Code
+            </button>
+          </div>
         </div>
 
       </div>
