@@ -1720,6 +1720,175 @@ class CommuteMapManager {
     }
   }
 
+  /**
+   * Render Driver GPS & Corridor Route for Passenger Mobile App
+   * Shows: Live Driver Vehicle GPS Marker with beacon, Passenger Pickup Pin, Workplace Destination, and Full Route
+   */
+  renderPassengerGpsView(trip, passenger) {
+    if (!this.map) this.init();
+    if (!this.map || !trip || !passenger) return;
+
+    this.markersLayer.clearLayers();
+    this.routeLayer.clearLayers();
+
+    const isMotorcycle = trip.vehicleType === 'motorcycle';
+    const routeColor = isMotorcycle ? '#10b981' : '#3b82f6';
+
+    const originLat = Number(trip.originLat) || 14.6500;
+    const originLng = Number(trip.originLng) || 121.0300;
+    const destLat = Number(trip.destinationLat) || 14.5507;
+    const destLng = Number(trip.destinationLng) || 121.0509;
+
+    const paxLat = Number(passenger.pickupLat) || ((originLat + destLat) / 2);
+    const paxLng = Number(passenger.pickupLng) || ((originLng + destLng) / 2);
+
+    // Calculate simulated live driver GPS location along the corridor approaching passenger pickup
+    const progress = 0.58; // Driver is actively moving along the corridor toward pickup
+    const driverGpsLat = originLat + (paxLat - originLat) * progress;
+    const driverGpsLng = originLng + (paxLng - originLng) * progress;
+
+    // Approximate distance in km between Driver GPS and Passenger Pickup
+    const dLat = (paxLat - driverGpsLat) * 111;
+    const dLng = (paxLng - driverGpsLng) * 111 * Math.cos(driverGpsLat * (Math.PI / 180));
+    const distKm = Math.max(0.6, Math.sqrt(dLat * dLat + dLng * dLng)).toFixed(1);
+    const etaMins = Math.max(3, Math.round(distKm * 2.8));
+
+    // 1. Driver Departure Origin Marker
+    const originIcon = L.divIcon({
+      className: 'custom-map-icon',
+      html: `
+        <div style="background-color: #64748b; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 2px solid white; font-size: 13px;">
+          🚩
+        </div>
+      `,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+    const originMarker = L.marker([originLat, originLng], { icon: originIcon }).addTo(this.markersLayer);
+    originMarker.bindPopup(`
+      <div class="p-2 text-xs">
+        <span class="inline-block px-1.5 py-0.5 font-bold rounded bg-slate-100 text-slate-800 uppercase mb-1 text-[10px]">
+          Trip Start
+        </span>
+        <h4 class="font-bold text-slate-900">${trip.originName}</h4>
+        <p class="text-slate-500">Departure: ${trip.departureTime}</p>
+      </div>
+    `);
+
+    // 2. LIVE DRIVER GPS POSITION MARKER (Pulsing Radar Beacon)
+    const driverGpsIcon = L.divIcon({
+      className: 'custom-map-icon',
+      html: `
+        <div class="gps-pulse-beacon" style="background-color: ${routeColor}; width: 44px; height: 44px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; border: 3px solid white; font-size: 20px; position: relative; box-shadow: 0 4px 16px rgba(0,0,0,0.35);">
+          ${isMotorcycle ? '🏍️' : '🚗'}
+          <span style="position: absolute; top: -2px; right: -2px; width: 14px; height: 14px; background: #22c55e; border: 2.5px solid white; border-radius: 50%; box-shadow: 0 0 8px #22c55e;"></span>
+        </div>
+      `,
+      iconSize: [44, 44],
+      iconAnchor: [22, 22]
+    });
+    const driverGpsMarker = L.marker([driverGpsLat, driverGpsLng], { icon: driverGpsIcon, zIndexOffset: 1000 }).addTo(this.markersLayer);
+    driverGpsMarker.bindPopup(`
+      <div class="p-2.5 text-xs min-w-[210px]">
+        <div class="flex items-center gap-1.5 mb-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
+            LIVE DRIVER GPS
+          </span>
+        </div>
+        <div class="font-extrabold text-sm text-slate-900">${trip.driverName}</div>
+        <div class="text-[11px] text-slate-600 font-semibold mt-0.5">${trip.vehicleModel} (${trip.plate || 'Verified'})</div>
+        <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg space-y-0.5">
+          <div class="text-blue-900 font-bold flex items-center justify-between">
+            <span>Distance to Pickup:</span>
+            <span>~${distKm} km</span>
+          </div>
+          <div class="text-emerald-700 font-extrabold flex items-center justify-between">
+            <span>Estimated Arrival:</span>
+            <span>~${etaMins} mins</span>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-1.5">Corridor GPS Signal: 🟢 Active</p>
+      </div>
+    `);
+
+    // 3. PASSENGER PICKUP LOCATION MARKER
+    const paxIcon = L.divIcon({
+      className: 'custom-map-icon',
+      html: `
+        <div style="background-color: #f59e0b; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 12px rgba(245,158,11,0.5); border: 3px solid white; font-size: 18px;">
+          📍
+        </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 36]
+    });
+    const paxMarker = L.marker([paxLat, paxLng], { icon: paxIcon, zIndexOffset: 500 }).addTo(this.markersLayer);
+    paxMarker.bindPopup(`
+      <div class="p-2 text-xs min-w-[180px]">
+        <span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-800 uppercase mb-1">
+          Your Pickup Point
+        </span>
+        <h4 class="font-bold text-slate-900">${passenger.name}</h4>
+        <p class="text-slate-600 font-medium">${passenger.pickupLocation}</p>
+        <p class="text-[11px] text-emerald-600 font-bold mt-1">Driver ETA: ~${etaMins} mins (~${distKm} km)</p>
+      </div>
+    `);
+
+    // 4. WORKPLACE HUB DESTINATION MARKER
+    const destIcon = L.divIcon({
+      className: 'custom-map-icon',
+      html: `
+        <div style="background-color: #8b5cf6; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 14px rgba(139,92,246,0.5); border: 3px solid white; font-size: 18px;">
+          🏢
+        </div>
+      `,
+      iconSize: [38, 38],
+      iconAnchor: [19, 19]
+    });
+    const destMarker = L.marker([destLat, destLng], { icon: destIcon }).addTo(this.markersLayer);
+    destMarker.bindPopup(`
+      <div class="p-2 text-xs">
+        <span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-purple-100 text-purple-800 uppercase mb-1">
+          Workplace Destination
+        </span>
+        <h4 class="font-bold text-slate-900">${trip.destinationName}</h4>
+        <p class="text-slate-500">${passenger.company}</p>
+      </div>
+    `);
+
+    // 5. GPS ROUTE POLYLINES (Highway Corridor)
+    const fullRouteCoords = [
+      [originLat, originLng],
+      [driverGpsLat, driverGpsLng],
+      [paxLat, paxLng],
+      [destLat, destLng]
+    ];
+
+    // Background glow line
+    L.polyline(fullRouteCoords, {
+      color: routeColor,
+      weight: 8,
+      opacity: 0.35
+    }).addTo(this.routeLayer);
+
+    // Foreground active route line
+    L.polyline(fullRouteCoords, {
+      color: routeColor,
+      weight: 5,
+      opacity: 0.9,
+      dashArray: isMotorcycle ? '6, 8' : null
+    }).addTo(this.routeLayer);
+
+    // Auto-fit bounds
+    try {
+      const group = new L.featureGroup([this.markersLayer, this.routeLayer]);
+      this.map.fitBounds(group.getBounds().pad(0.22));
+    } catch (e) {
+      this.map.setView([driverGpsLat, driverGpsLng], 13);
+    }
+  }
+
   invalidateSize() {
     if (this.map) {
       setTimeout(() => this.map.invalidateSize(), 200);
@@ -1923,7 +2092,9 @@ const chatManager = new RideChatManager();
 class TaraLetsApp {
   constructor() {
     this.mapManager = new CommuteMapManager('commute-map');
+    this.passengerMapManager = new CommuteMapManager('passenger-commute-map');
     this.selectedTripId = null;
+    this.selectedPassengerMapTripId = null;
     this.selectedBookingPassengerId = null;
     this.requestingTripId = null;
   }
@@ -1933,6 +2104,7 @@ class TaraLetsApp {
     this.handleUrlParams();
     this.setupEventListeners();
     this.mapManager.init();
+    this.passengerMapManager.init();
     this.syncActiveRoleUI();
     this.render();
   }
@@ -2319,7 +2491,8 @@ class TaraLetsApp {
       }
     }
 
-    this.mapManager.invalidateSize();
+    if (this.mapManager) this.mapManager.invalidateSize();
+    if (this.passengerMapManager) this.passengerMapManager.invalidateSize();
   }
 
   toggleRole() {
@@ -3272,6 +3445,10 @@ class TaraLetsApp {
                       </div>
                     </div>
                     <div class="flex flex-col items-end gap-1.5">
+                      <button onclick="window.taraletsApp.viewDriverOnPassengerMap('${b.tripId}')"
+                        class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs">
+                        📍 Track GPS
+                      </button>
                       ${!isPendingVerif ? `
                         <button onclick="window.taraletsApp.openChat('${b.id}')"
                           class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1">
@@ -3382,12 +3559,18 @@ class TaraLetsApp {
                 `;
               } else if (hasSeats) {
                 return `
-                  <div class="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                    <span class="text-[11px] text-slate-500">${t.totalSeats - (t.bookedSeats || 0)} seat(s) available</span>
-                    <button onclick="window.taraletsApp.openPassengerRequestModal('${t.id}')" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
-                      <span>🎟️</span>
-                      <span>Request a Ride to Driver</span>
-                    </button>
+                  <div class="mt-2.5 flex items-center justify-between gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                    <span class="text-[11px] text-slate-500 font-semibold">${t.totalSeats - (t.bookedSeats || 0)} seat(s) available</span>
+                    <div class="flex items-center gap-2">
+                      <button type="button" onclick="window.taraletsApp.viewDriverOnPassengerMap('${t.id}')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 transition flex items-center gap-1 shadow-2xs">
+                        <span>🗺️</span>
+                        <span>View GPS Map</span>
+                      </button>
+                      <button type="button" onclick="window.taraletsApp.openPassengerRequestModal('${t.id}')" class="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5">
+                        <span>🎟️</span>
+                        <span>Request a Ride</span>
+                      </button>
+                    </div>
                   </div>
                 `;
               } else {
@@ -3397,6 +3580,146 @@ class TaraLetsApp {
           </div>
         `;
       }).join('');
+    }
+
+    // Render Driver GPS Map for Passenger Mobile App
+    this.renderPassengerGpsMap();
+  }
+
+  // ========================================================
+  // DRIVER GPS MAP FOR PASSENGER MOBILE APP
+  // ========================================================
+  renderPassengerGpsMap() {
+    const currentPax = storage.getCurrentPassenger();
+    if (!currentPax) return;
+
+    const matchedTrips = getMatchingTripsForPassenger(currentPax);
+    const allTrips = storage.getTrips();
+    const myBookings = storage.getBookings().filter(b => b.passengerId === currentPax.id);
+
+    // Prioritize active booking trip, or selected trip, or top matched trip
+    let activeTrip = null;
+    if (this.selectedPassengerMapTripId) {
+      activeTrip = allTrips.find(t => t.id === this.selectedPassengerMapTripId);
+    }
+
+    if (!activeTrip && myBookings.length > 0) {
+      const bookedTripId = myBookings[0].tripId;
+      activeTrip = allTrips.find(t => t.id === bookedTripId);
+    }
+
+    if (!activeTrip && matchedTrips.length > 0) {
+      activeTrip = matchedTrips[0].trip;
+    }
+
+    if (!activeTrip && allTrips.length > 0) {
+      activeTrip = allTrips[0];
+    }
+
+    if (activeTrip) {
+      this.selectedPassengerMapTripId = activeTrip.id;
+    }
+
+    // Populate Driver Selector Dropdown
+    const selectEl = document.getElementById('passenger-map-driver-select');
+    if (selectEl) {
+      const candidateTrips = matchedTrips.length > 0 ? matchedTrips.map(m => m.trip) : allTrips;
+      selectEl.innerHTML = candidateTrips.map(t => {
+        const isSelected = activeTrip && t.id === activeTrip.id;
+        const icon = t.vehicleType === 'motorcycle' ? '🏍️' : '🚗';
+        return `<option value="${t.id}" ${isSelected ? 'selected' : ''}>${icon} ${t.driverName} (${t.departureTime})</option>`;
+      }).join('');
+    }
+
+    // Render Live Driver Status Banner
+    const bannerEl = document.getElementById('passenger-map-driver-status-banner');
+    if (bannerEl && activeTrip) {
+      const isMotorcycle = activeTrip.vehicleType === 'motorcycle';
+      const myBooking = myBookings.find(b => b.tripId === activeTrip.id);
+      const isConfirmed = myBooking && myBooking.status === 'confirmed';
+      const isPending = myBooking && myBooking.status === 'pending_verification';
+
+      bannerEl.innerHTML = `
+        <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-emerald-50 border border-blue-200/80 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div class="flex items-center gap-3 min-w-0">
+            <img src="${activeTrip.driverAvatar}" alt="${activeTrip.driverName}" class="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-sm shrink-0">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="font-extrabold text-sm text-slate-900 truncate">${activeTrip.driverName}</h4>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${isConfirmed ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : isPending ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-blue-100 text-blue-800 border border-blue-300'}">
+                  ${isConfirmed ? '✓ Confirmed Passenger' : isPending ? '⏳ Verification Pending' : '🟢 Live Corridor GPS'}
+                </span>
+              </div>
+              <div class="text-[11px] text-slate-600 font-semibold mt-1 flex items-center gap-2 flex-wrap">
+                <span class="text-slate-800">${isMotorcycle ? '🏍️' : '🚗'} ${activeTrip.vehicleModel} (${activeTrip.plate || 'Verified'})</span>
+                <span class="text-slate-300">•</span>
+                <span class="text-emerald-700 font-bold">Departs: ${activeTrip.departureTime}</span>
+                <span class="text-slate-300">•</span>
+                <span class="text-blue-700 font-bold">₱${activeTrip.farePerSeat}/seat</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="window.taraletsApp.openChatForPassenger('${currentPax.id}')" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-2xs">
+              <span>💬</span>
+              <span>Chat</span>
+            </button>
+            ${!myBooking ? `
+              <button type="button" onclick="window.taraletsApp.openPassengerRequestModal('${activeTrip.id}')" class="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white rounded-xl text-xs font-extrabold shadow-sm transition flex items-center gap-1">
+                <span>🎟️</span>
+                <span>Request Ride</span>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // Render GPS View on Map
+    if (activeTrip && this.passengerMapManager) {
+      if (!this.passengerMapManager.map) {
+        this.passengerMapManager.init();
+      }
+      this.passengerMapManager.renderPassengerGpsView(activeTrip, currentPax);
+      this.passengerMapManager.invalidateSize();
+    }
+  }
+
+  onPassengerSelectDriverForMap(tripId) {
+    this.selectedPassengerMapTripId = tripId;
+    this.renderPassengerGpsMap();
+    this.showToast('📍 Switched driver GPS tracking corridor', 'info');
+  }
+
+  viewDriverOnPassengerMap(tripId) {
+    this.selectedPassengerMapTripId = tripId;
+    this.renderPassengerGpsMap();
+    this.scrollToSection('passenger-commute-map-card');
+    if (this.passengerMapManager) {
+      this.passengerMapManager.invalidateSize();
+    }
+  }
+
+  recenterPassengerMap() {
+    if (this.passengerMapManager) {
+      this.renderPassengerGpsMap();
+      this.passengerMapManager.invalidateSize();
+      this.showToast('📍 Recentered GPS map on Driver & Pickup location', 'info');
+    }
+  }
+
+  handleMobileMapTab() {
+    const isDriver = !storage.isCommuterOnlyMode() && storage.getActiveRole() === 'driver';
+    if (isDriver) {
+      this.scrollToSection('commute-map-card');
+      if (this.mapManager) this.mapManager.invalidateSize();
+    } else {
+      this.scrollToSection('passenger-commute-map-card');
+      if (this.passengerMapManager) {
+        this.renderPassengerGpsMap();
+        this.passengerMapManager.invalidateSize();
+      }
     }
   }
 

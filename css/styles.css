@@ -111,8 +111,29 @@ body.theme-logo-mint ::-webkit-scrollbar-thumb {
 }
 
 /* Custom Leaflet overrides & mobile scroll passthrough */
-#commute-map {
+#commute-map,
+#passenger-commute-map {
   touch-action: pan-y !important;
+}
+
+/* Driver GPS Live Pulse Beacon Animation */
+@keyframes gpsPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    transform: scale(0.96);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(16, 185, 129, 0);
+    transform: scale(1.04);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    transform: scale(0.96);
+  }
+}
+
+.gps-pulse-beacon {
+  animation: gpsPulse 2s infinite ease-in-out;
 }
 
 .leaflet-container {
