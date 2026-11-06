@@ -791,6 +791,160 @@ class StorageService {
     window.dispatchEvent(new CustomEvent('taralets:new-message', { detail: msg }));
     return msg;
   }
+
+  // ========================================================
+  // DEVELOPER & FLEET API KEYS MANAGEMENT
+  // ========================================================
+  getApiKeys() {
+    const raw = localStorage.getItem('taralets_api_keys');
+    if (!raw) {
+      const initialKeys = [
+        {
+          id: "key-demo-1",
+          name: "Company Fleet Telemetry & Mobile Sync",
+          key: "tl_live_9f8a4b2c1e7d6a5f3e2b1c4a8d7e9f0a",
+          environment: "live",
+          scopes: ["read:trips", "read:gps", "write:bookings"],
+          createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+          lastUsed: "Just now",
+          status: "active"
+        }
+      ];
+      localStorage.setItem('taralets_api_keys', JSON.stringify(initialKeys));
+      return initialKeys;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  generateApiKey(name, environment = 'live', scopes = ['read:trips', 'read:gps']) {
+    const keys = this.getApiKeys();
+    
+    // Generate 32-character random hex token
+    const randomBytes = new Uint8Array(16);
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(randomBytes);
+    } else {
+      for (let i = 0; i < 16; i++) randomBytes[i] = Math.floor(Math.random() * 256);
+    }
+    const tokenHex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    const prefix = environment === 'test' ? 'tl_test_' : 'tl_live_';
+    const apiKeyString = prefix + tokenHex;
+
+    const newKey = {
+      id: "key-" + Date.now(),
+      name: name && name.trim() ? name.trim() : "Fleet Mobile Integration Key",
+      key: apiKeyString,
+      environment,
+      scopes: scopes && scopes.length > 0 ? scopes : ["read:trips", "read:gps"],
+      createdAt: new Date().toISOString(),
+      lastUsed: "Never",
+      status: "active"
+    };
+
+    keys.unshift(newKey);
+    localStorage.setItem('taralets_api_keys', JSON.stringify(keys));
+    window.dispatchEvent(new CustomEvent('taralets:api-key-created', { detail: newKey }));
+    return newKey;
+  }
+
+  revokeApiKey(keyId) {
+    const keys = this.getApiKeys();
+    const target = keys.find(k => k.id === keyId);
+    if (target) {
+      target.status = target.status === 'active' ? 'revoked' : 'active';
+      localStorage.setItem('taralets_api_keys', JSON.stringify(keys));
+      window.dispatchEvent(new CustomEvent('taralets:api-keys-updated', { detail: keys }));
+    }
+    return target;
+  }
+
+  deleteApiKey(keyId) {
+    let keys = this.getApiKeys();
+    keys = keys.filter(k => k.id !== keyId);
+    localStorage.setItem('taralets_api_keys', JSON.stringify(keys));
+    window.dispatchEvent(new CustomEvent('taralets:api-keys-updated', { detail: keys }));
+    return keys;
+  }
+
+  simulateApiRequest(endpoint, apiKeyString) {
+    const keys = this.getApiKeys();
+    const matchedKey = keys.find(k => k.key === apiKeyString && k.status === 'active');
+    
+    if (!matchedKey) {
+      return {
+        status: 401,
+        error: "Unauthorized",
+        message: "Invalid or revoked API key. Pass 'Authorization: Bearer tl_live_...' in HTTP headers."
+      };
+    }
+
+    matchedKey.lastUsed = "Just now";
+    localStorage.setItem('taralets_api_keys', JSON.stringify(keys));
+
+    if (endpoint === 'gps') {
+      const trips = this.getTrips();
+      const firstTrip = trips[0] || {};
+      return {
+        status: 200,
+        endpoint: "/api/v1/driver/gps",
+        timestamp: new Date().toISOString(),
+        apiKeyPrefix: matchedKey.key.substring(0, 10) + "••••••••",
+        telemetry: {
+          tripId: firstTrip.id,
+          driverName: firstTrip.driverName,
+          vehicle: `${firstTrip.vehicleType === 'motorcycle' ? 'Motorcycle' : 'Car'}: ${firstTrip.vehicleModel}`,
+          plate: firstTrip.plate || "Verified",
+          gps: {
+            latitude: Number(firstTrip.originLat) ? (Number(firstTrip.originLat) + 0.012).toFixed(6) : "14.717600",
+            longitude: Number(firstTrip.originLng) ? (Number(firstTrip.originLng) + 0.008).toFixed(6) : "121.060100",
+            speedKmh: 42.5,
+            heading: "148° SE toward BGC Corridor",
+            accuracyMeters: 3.5,
+            status: "GPS_FIX_ONLINE"
+          },
+          corridor: {
+            origin: firstTrip.originName,
+            destination: firstTrip.destinationName,
+            departureTime: firstTrip.departureTime,
+            seatsRemaining: (firstTrip.totalSeats || 3) - (firstTrip.bookedSeats || 0)
+          }
+        }
+      };
+    } else if (endpoint === 'trips') {
+      const trips = this.getTrips();
+      return {
+        status: 200,
+        endpoint: "/api/v1/trips",
+        timestamp: new Date().toISOString(),
+        apiKeyPrefix: matchedKey.key.substring(0, 10) + "••••••••",
+        total: trips.length,
+        trips: trips.map(t => ({
+          id: t.id,
+          driver: t.driverName,
+          vehicle: `${t.vehicleType}: ${t.vehicleModel}`,
+          origin: t.originName,
+          destination: t.destinationName,
+          departureTime: t.departureTime,
+          fare: t.farePerSeat,
+          seatsAvailable: t.totalSeats - (t.bookedSeats || 0)
+        }))
+      };
+    } else {
+      const bookings = this.getBookings();
+      return {
+        status: 200,
+        endpoint: "/api/v1/bookings",
+        timestamp: new Date().toISOString(),
+        apiKeyPrefix: matchedKey.key.substring(0, 10) + "••••••••",
+        total: bookings.length,
+        bookings: bookings.slice(0, 5)
+      };
+    }
+  }
 }
 
 export const storage = new StorageService();

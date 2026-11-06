@@ -1377,6 +1377,160 @@ class StorageService {
     window.dispatchEvent(new CustomEvent('taralets:new-message', { detail: msg }));
     return msg;
   }
+
+  // ========================================================
+  // DEVELOPER & FLEET API KEYS MANAGEMENT
+  // ========================================================
+  getApiKeys() {
+    const raw = localStorage.getItem('taralets_api_keys');
+    if (!raw) {
+      const initialKeys = [
+        {
+          id: "key-demo-1",
+          name: "Company Fleet Telemetry & Mobile Sync",
+          key: "tl_live_9f8a4b2c1e7d6a5f3e2b1c4a8d7e9f0a",
+          environment: "live",
+          scopes: ["read:trips", "read:gps", "write:bookings"],
+          createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+          lastUsed: "Just now",
+          status: "active"
+        }
+      ];
+      localStorage.setItem('taralets_api_keys', JSON.stringify(initialKeys));
+      return initialKeys;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  generateApiKey(name, environment = 'live', scopes = ['read:trips', 'read:gps']) {
+    const keys = this.getApiKeys();
+    
+    // Generate 32-character random hex token
+    const randomBytes = new Uint8Array(16);
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(randomBytes);
+    } else {
+      for (let i = 0; i < 16; i++) randomBytes[i] = Math.floor(Math.random() * 256);
+    }
+    const tokenHex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    const prefix = environment === 'test' ? 'tl_test_' : 'tl_live_';
+    const apiKeyString = prefix + tokenHex;
+
+    const newKey = {
+      id: "key-" + Date.now(),
+      name: name && name.trim() ? name.trim() : "Fleet Mobile Integration Key",
+      key: apiKeyString,
+      environment,
+      scopes: scopes && scopes.length > 0 ? scopes : ["read:trips", "read:gps"],
+      createdAt: new Date().toISOString(),
+      lastUsed: "Never",
+      status: "active"
+    };
+
+    keys.unshift(newKey);
+    localStorage.setItem('taralets_api_keys', JSON.stringify(keys));
+    window.dispatchEvent(new CustomEvent('taralets:api-key-created', { detail: newKey }));
+    return newKey;
+  }
+
+  revokeApiKey(keyId) {
+    const keys = this.getApiKeys();
+    const target = keys.find(k => k.id === keyId);
+    if (target) {
+      target.status = target.status === 'active' ? 'revoked' : 'active';
+      localStorage.setItem('taralets_api_keys', JSON.stringify(keys));
+      window.dispatchEvent(new CustomEvent('taralets:api-keys-updated', { detail: keys }));
+    }
+    return target;
+  }
+
+  deleteApiKey(keyId) {
+    let keys = this.getApiKeys();
+    keys = keys.filter(k => k.id !== keyId);
+    localStorage.setItem('taralets_api_keys', JSON.stringify(keys));
+    window.dispatchEvent(new CustomEvent('taralets:api-keys-updated', { detail: keys }));
+    return keys;
+  }
+
+  simulateApiRequest(endpoint, apiKeyString) {
+    const keys = this.getApiKeys();
+    const matchedKey = keys.find(k => k.key === apiKeyString && k.status === 'active');
+    
+    if (!matchedKey) {
+      return {
+        status: 401,
+        error: "Unauthorized",
+        message: "Invalid or revoked API key. Pass 'Authorization: Bearer tl_live_...' in HTTP headers."
+      };
+    }
+
+    matchedKey.lastUsed = "Just now";
+    localStorage.setItem('taralets_api_keys', JSON.stringify(keys));
+
+    if (endpoint === 'gps') {
+      const trips = this.getTrips();
+      const firstTrip = trips[0] || {};
+      return {
+        status: 200,
+        endpoint: "/api/v1/driver/gps",
+        timestamp: new Date().toISOString(),
+        apiKeyPrefix: matchedKey.key.substring(0, 10) + "••••••••",
+        telemetry: {
+          tripId: firstTrip.id,
+          driverName: firstTrip.driverName,
+          vehicle: `${firstTrip.vehicleType === 'motorcycle' ? 'Motorcycle' : 'Car'}: ${firstTrip.vehicleModel}`,
+          plate: firstTrip.plate || "Verified",
+          gps: {
+            latitude: Number(firstTrip.originLat) ? (Number(firstTrip.originLat) + 0.012).toFixed(6) : "14.717600",
+            longitude: Number(firstTrip.originLng) ? (Number(firstTrip.originLng) + 0.008).toFixed(6) : "121.060100",
+            speedKmh: 42.5,
+            heading: "148° SE toward BGC Corridor",
+            accuracyMeters: 3.5,
+            status: "GPS_FIX_ONLINE"
+          },
+          corridor: {
+            origin: firstTrip.originName,
+            destination: firstTrip.destinationName,
+            departureTime: firstTrip.departureTime,
+            seatsRemaining: (firstTrip.totalSeats || 3) - (firstTrip.bookedSeats || 0)
+          }
+        }
+      };
+    } else if (endpoint === 'trips') {
+      const trips = this.getTrips();
+      return {
+        status: 200,
+        endpoint: "/api/v1/trips",
+        timestamp: new Date().toISOString(),
+        apiKeyPrefix: matchedKey.key.substring(0, 10) + "••••••••",
+        total: trips.length,
+        trips: trips.map(t => ({
+          id: t.id,
+          driver: t.driverName,
+          vehicle: `${t.vehicleType}: ${t.vehicleModel}`,
+          origin: t.originName,
+          destination: t.destinationName,
+          departureTime: t.departureTime,
+          fare: t.farePerSeat,
+          seatsAvailable: t.totalSeats - (t.bookedSeats || 0)
+        }))
+      };
+    } else {
+      const bookings = this.getBookings();
+      return {
+        status: 200,
+        endpoint: "/api/v1/bookings",
+        timestamp: new Date().toISOString(),
+        apiKeyPrefix: matchedKey.key.substring(0, 10) + "••••••••",
+        total: bookings.length,
+        bookings: bookings.slice(0, 5)
+      };
+    }
+  }
 }
 const storage = new StorageService();
 
@@ -4342,6 +4496,231 @@ class TaraLetsApp {
     else nextTheme = 'logo-emerald';
 
     this.setTheme(nextTheme, true);
+  }
+
+  // ==========================================
+  // DEVELOPER & FLEET API KEYS PORTAL
+  // ==========================================
+
+  openApiKeysModal() {
+    const modal = document.getElementById('modal-api-keys');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    this.renderApiKeysList();
+    this.updateCurlPreview();
+  }
+
+  renderApiKeysList() {
+    const container = document.getElementById('api-keys-list-container');
+    const badge = document.getElementById('api-keys-count-badge');
+    if (!container) return;
+
+    const keys = storage.getApiKeys();
+    if (badge) {
+      badge.textContent = `${keys.length} ${keys.length === 1 ? 'Key' : 'Keys'}`;
+    }
+
+    if (keys.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-slate-500 text-xs">
+          <p class="font-bold text-slate-700">No API keys created yet</p>
+          <p class="text-[11px] text-slate-500 mt-1">Generate your first key above to integrate mobile GPS and booking systems.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = keys.map(k => {
+      const isLive = k.environment === 'live';
+      const isActive = k.status === 'active';
+      const maskedKey = `${k.key.substring(0, 10)}••••••••••••••••${k.key.slice(-4)}`;
+      const formattedDate = new Date(k.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+      return `
+        <div class="p-3.5 rounded-xl border ${isActive ? 'bg-white border-slate-200 shadow-2xs' : 'bg-slate-50 border-slate-200 opacity-60'} flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-extrabold text-xs text-slate-900 truncate">${k.name}</span>
+              <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isLive ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
+                ${isLive ? 'Live Production' : 'Sandbox / Test'}
+              </span>
+              <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isActive ? 'bg-green-100 text-green-800' : 'bg-rose-100 text-rose-800'}">
+                ${isActive ? 'Active' : 'Revoked'}
+              </span>
+            </div>
+
+            <div class="mt-1 flex items-center gap-2 font-mono text-[11px] text-slate-600">
+              <span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold truncate">${maskedKey}</span>
+              <button type="button" onclick="window.taraletsApp.copyApiKey('${k.key}')" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold" title="Copy Key Token">
+                📋
+              </button>
+            </div>
+
+            <div class="mt-2 flex items-center gap-1.5 flex-wrap">
+              ${(k.scopes || []).map(s => `
+                <span class="text-[10px] font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200/80">${s}</span>
+              `).join('')}
+              <span class="text-[10px] text-slate-400 ml-1">Created ${formattedDate}</span>
+              ${k.lastUsed ? `<span class="text-[10px] text-emerald-600 font-semibold">• Used ${k.lastUsed}</span>` : ''}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick="window.taraletsApp.revokeApiKey('${k.id}')" class="px-2.5 py-1 text-xs font-bold rounded-lg border transition ${isActive ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'border-green-300 bg-green-50 text-green-800 hover:bg-green-100'}">
+              ${isActive ? 'Revoke' : 'Restore'}
+            </button>
+            <button type="button" onclick="window.taraletsApp.deleteApiKey('${k.id}')" class="p-1 text-slate-400 hover:text-rose-600 transition" title="Delete Key">
+              🗑️
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  handleGenerateApiKey(e) {
+    if (e) e.preventDefault();
+    const nameInput = document.getElementById('api-key-input-name');
+    const envInput = document.getElementById('api-key-input-env');
+    if (!nameInput || !envInput) return;
+
+    const name = nameInput.value.trim();
+    const env = envInput.value;
+    if (!name) {
+      this.showToast('Please enter a descriptive name for your API key.', 'warning');
+      return;
+    }
+
+    const scopes = [];
+    if (document.getElementById('api-scope-trips')?.checked) scopes.push('read:trips');
+    if (document.getElementById('api-scope-gps')?.checked) scopes.push('read:gps');
+    if (document.getElementById('api-scope-bookings')?.checked) scopes.push('write:bookings');
+
+    const newKey = storage.generateApiKey(name, env, scopes);
+
+    // Show secret banner
+    const banner = document.getElementById('api-key-new-banner');
+    const tokenDisplay = document.getElementById('api-key-new-token');
+    if (banner && tokenDisplay) {
+      tokenDisplay.textContent = newKey.key;
+      banner.classList.remove('hidden');
+    }
+
+    // Reset name input
+    nameInput.value = '';
+
+    this.renderApiKeysList();
+    this.updateCurlPreview();
+    this.showToast('API Key generated! Copy secret token now.', 'success');
+  }
+
+  copyNewGeneratedApiKey() {
+    const tokenDisplay = document.getElementById('api-key-new-token');
+    if (!tokenDisplay) return;
+    const key = tokenDisplay.textContent.trim();
+    this.copyApiKey(key);
+  }
+
+  copyApiKey(keyText) {
+    if (!keyText) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(keyText).then(() => {
+        this.showToast('API Key copied to clipboard!', 'success');
+      }).catch(() => {
+        this.fallbackCopyText(keyText);
+      });
+    } else {
+      this.fallbackCopyText(keyText);
+    }
+  }
+
+  fallbackCopyText(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      this.showToast('API Key copied to clipboard!', 'success');
+    } catch (err) {
+      this.showToast('Failed to copy. Please manually copy the key.', 'error');
+    }
+    document.body.removeChild(ta);
+  }
+
+  revokeApiKey(keyId) {
+    const updated = storage.revokeApiKey(keyId);
+    this.renderApiKeysList();
+    this.updateCurlPreview();
+    if (updated) {
+      this.showToast(updated.status === 'revoked' ? 'API Key has been revoked.' : 'API Key restored to active.', 'info');
+    }
+  }
+
+  deleteApiKey(keyId) {
+    if (!confirm('Are you sure you want to permanently delete this API key?')) return;
+    storage.deleteApiKey(keyId);
+    this.renderApiKeysList();
+    this.updateCurlPreview();
+    this.showToast('API key deleted.', 'info');
+  }
+
+  onApiExplorerEndpointChange(endpoint) {
+    this.updateCurlPreview(endpoint);
+  }
+
+  updateCurlPreview(chosenEndpoint) {
+    const endpointEl = document.getElementById('api-explorer-endpoint');
+    const endpoint = chosenEndpoint || (endpointEl ? endpointEl.value : 'gps');
+    const curlEl = document.getElementById('api-curl-preview');
+    if (!curlEl) return;
+
+    const keys = storage.getApiKeys();
+    const activeKey = keys.find(k => k.status === 'active') || keys[0];
+    const tokenStr = activeKey ? activeKey.key : 'tl_live_your_secret_key_here';
+
+    let path = 'driver/gps';
+    if (endpoint === 'trips') path = 'trips';
+    if (endpoint === 'bookings') path = 'bookings';
+
+    curlEl.textContent = `curl -X GET "https://taralets-tawny.vercel.app/api/v1/${path}" \\\n  -H "Authorization: Bearer ${tokenStr}"`;
+  }
+
+  copyCurlCommand() {
+    const curlEl = document.getElementById('api-curl-preview');
+    if (!curlEl) return;
+    this.copyApiKey(curlEl.textContent.trim());
+  }
+
+  executeApiSimulation() {
+    const endpointEl = document.getElementById('api-explorer-endpoint');
+    const endpoint = endpointEl ? endpointEl.value : 'gps';
+    const responseEl = document.getElementById('api-response-payload');
+
+    const keys = storage.getApiKeys();
+    const activeKey = keys.find(k => k.status === 'active') || keys[0];
+
+    if (!activeKey || activeKey.status !== 'active') {
+      if (responseEl) {
+        responseEl.textContent = JSON.stringify({
+          status: 401,
+          error: "Unauthorized",
+          message: "No active API key found. Generate an active key above or restore an existing key."
+        }, null, 2);
+      }
+      this.showToast('No active API Key found for request simulation.', 'warning');
+      return;
+    }
+
+    const res = storage.simulateApiRequest(endpoint, activeKey.key);
+    if (responseEl) {
+      responseEl.textContent = JSON.stringify(res, null, 2);
+    }
+    this.renderApiKeysList();
+    this.showToast(`API ${res.status} OK - Received response`, 'success');
   }
 }
 

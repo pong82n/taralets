@@ -138,6 +138,12 @@
           <span class="hidden xl:inline text-[11px]" id="theme-label">Logo Theme</span>
         </button>
 
+        <!-- Developer & Fleet API Keys Button -->
+        <button onclick="window.taraletsApp.openApiKeysModal()" class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-400/30 text-emerald-200 rounded-xl text-xs font-bold transition shadow-2xs" title="Generate & Manage Developer & Fleet API Keys">
+          <span>&#128273;</span>
+          <span class="hidden sm:inline text-[11px]">API Keys</span>
+        </button>
+
         <!-- Reset Seed Data Button -->
         <button id="btn-reset-data" title="Reset to Sample Metro Manila Data" class="hidden sm:inline-flex p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1788,6 +1794,168 @@
     </div>
   </div>
 
+  <!-- ======================================================= -->
+  <!-- MODAL: DEVELOPER & FLEET API KEYS PORTAL                -->
+  <!-- ======================================================= -->
+  <div id="modal-api-keys" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[92vh] flex flex-col transform transition-all">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 p-4 text-white flex items-center justify-between shrink-0 border-b border-emerald-500/20">
+        <div class="flex items-center gap-2.5">
+          <span class="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 text-lg border border-emerald-400/30">&#128273;</span>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-extrabold text-base text-white">TaraLets Developer &amp; Fleet API Keys</h3>
+              <span class="text-[9px] uppercase font-black bg-emerald-500 text-emerald-950 px-2 py-0.5 rounded-full">REST API v1</span>
+            </div>
+            <p class="text-[11px] text-emerald-200/80 mt-0.5">Generate secret keys for mobile GPS telemetry, live route tracking &amp; booking automation</p>
+          </div>
+        </div>
+        <button data-close-modal="modal-api-keys" class="text-white/70 hover:text-white p-1 rounded-lg">
+          &times;
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-6 touch-scroll flex-1">
+        
+        <!-- NEW KEY CREATED SUCCESS BANNER -->
+        <div id="api-key-new-banner" class="hidden bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-4 shadow-sm animate-pulse-subtle">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-200/60 px-2 py-0.5 rounded-full">
+                &#127881; Key Generated Successfully!
+              </span>
+              <h4 class="font-bold text-emerald-950 text-sm mt-1">Copy Your Secret Key Now</h4>
+              <p class="text-[11px] text-emerald-800 mt-0.5">For security, you will not be able to view this full secret key again after closing this window.</p>
+            </div>
+            <button type="button" onclick="document.getElementById('api-key-new-banner').classList.add('hidden')" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold">&times;</button>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between gap-2 bg-slate-950 text-emerald-300 p-2.5 rounded-xl border border-emerald-500/30 font-mono text-xs">
+            <span id="api-key-new-token" class="truncate font-bold tracking-wide select-all">tl_live_...</span>
+            <button type="button" id="btn-copy-new-key" onclick="window.taraletsApp.copyNewGeneratedApiKey()" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xs rounded-lg transition shrink-0 flex items-center gap-1 shadow-sm">
+              <span>&#128203;</span>
+              <span>Copy Key</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- GENERATE FORM -->
+        <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+              <span>&#9889;</span>
+              <span>Generate New API Key</span>
+            </h4>
+            <span class="text-[11px] text-slate-400">Bearer Token Auth</span>
+          </div>
+
+          <form id="form-generate-api-key" onsubmit="window.taraletsApp.handleGenerateApiKey(event)" class="space-y-3.5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Key Name / Description</label>
+                <input type="text" id="api-key-input-name" required placeholder="e.g. Mobile GPS Tracker / Shuttle Dispatch" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Environment</label>
+                <select id="api-key-input-env" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white">
+                  <option value="live">Production (tl_live_)</option>
+                  <option value="test">Sandbox / Dev (tl_test_)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1.5">Permissions &amp; API Scopes</label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-emerald-400 transition">
+                  <input type="checkbox" id="api-scope-trips" value="read:trips" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                  <span class="font-medium text-slate-800 text-[11px]">read:trips</span>
+                </label>
+                <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-emerald-400 transition">
+                  <input type="checkbox" id="api-scope-gps" value="read:gps" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                  <span class="font-medium text-slate-800 text-[11px]">read:gps</span>
+                </label>
+                <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-emerald-400 transition">
+                  <input type="checkbox" id="api-scope-bookings" value="write:bookings" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                  <span class="font-medium text-slate-800 text-[11px]">write:bookings</span>
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <span>&#128273;</span>
+              <span>Generate Secret API Key</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- ACTIVE KEYS LIST -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <h4 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+              <span>&#128203;</span>
+              <span>Active API Keys</span>
+            </h4>
+            <span id="api-keys-count-badge" class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">0 Keys</span>
+          </div>
+
+          <div id="api-keys-list-container" class="space-y-2.5">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- INTERACTIVE API EXPLORER & TESTER -->
+        <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-lg space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-base">&#128640;</span>
+              <h4 class="font-extrabold text-xs sm:text-sm text-white">Live API Request Simulator</h4>
+              <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800/60">200 OK Live</span>
+            </div>
+
+            <!-- Endpoint Selector -->
+            <div class="flex items-center gap-2 text-xs">
+              <label class="text-slate-400 text-[11px]">Endpoint:</label>
+              <select id="api-explorer-endpoint" onchange="window.taraletsApp.onApiExplorerEndpointChange(this.value)" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-emerald-300 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-400">
+                <option value="gps">GET /api/v1/driver/gps</option>
+                <option value="trips">GET /api/v1/trips</option>
+                <option value="bookings">GET /api/v1/bookings</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Curl Command Preview -->
+          <div>
+            <div class="text-[10px] text-slate-400 font-bold mb-1 flex items-center justify-between">
+              <span>cURL Snippet:</span>
+              <button type="button" onclick="window.taraletsApp.copyCurlCommand()" class="text-emerald-400 hover:text-emerald-300 underline font-mono">Copy curl</button>
+            </div>
+            <pre id="api-curl-preview" class="bg-black/50 p-2.5 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto whitespace-pre select-all">curl -X GET "https://taralets-tawny.vercel.app/api/v1/driver/gps" \
+  -H "Authorization: Bearer tl_live_..."</pre>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <button type="button" onclick="window.taraletsApp.executeApiSimulation()" class="py-2 px-4 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs rounded-xl shadow transition flex items-center gap-1.5">
+              <span>&#9889;</span>
+              <span>Send Test Request</span>
+            </button>
+            <span class="text-[10px] text-slate-400 font-mono">Response: JSON</span>
+          </div>
+
+          <!-- Response Box -->
+          <div>
+            <div class="text-[10px] text-slate-400 font-bold mb-1">Response Payload:</div>
+            <pre id="api-response-payload" class="bg-black/70 p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-400 overflow-x-auto max-h-48 touch-scroll">// Press 'Send Test Request' to view live API response</pre>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
   <!-- ================= MOBILE & TABLET BOTTOM APP BAR ================= -->
   <nav class="glass-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 px-1.5 py-1 safe-bottom-nav lg:hidden">
     <div class="max-w-md mx-auto grid grid-cols-6 gap-0.5 text-center">
