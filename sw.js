@@ -2,7 +2,7 @@
  * TaraLets Service Worker for Mobile & Tablet PWA Support
  */
 
-const CACHE_NAME = 'taralets-cache-v8';
+const CACHE_NAME = 'taralets-cache-v9';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

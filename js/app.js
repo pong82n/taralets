@@ -12,10 +12,14 @@ class TaraLetsApp {
   constructor() {
     this.mapManager = new CommuteMapManager('commute-map');
     this.passengerMapManager = new CommuteMapManager('passenger-commute-map');
+    this.confirmedGpsMapManager = new CommuteMapManager('confirmed-booking-map');
     this.selectedTripId = null;
     this.selectedPassengerMapTripId = null;
     this.selectedBookingPassengerId = null;
     this.requestingTripId = null;
+    this.activeTrackingBookingId = null;
+    this.gpsSimulationInterval = null;
+    this.simProgress = 0.52;
   }
 
   init() {
@@ -1312,7 +1316,11 @@ class TaraLetsApp {
           </div>
 
           <div class="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button onclick="window.taraletsApp.openLiveGpsTracker('${b.id}')"
+                class="px-2.5 py-1 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg flex items-center gap-1 transition border border-emerald-200" title="Track Live GPS Location of Driver & Passenger">
+                🛰️ Live GPS
+              </button>
               <button onclick="window.taraletsApp.openChat('${b.id}')"
                 class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg flex items-center gap-1 transition">
                 💬 Chat
@@ -1501,14 +1509,20 @@ class TaraLetsApp {
                       </div>
                     </div>
                     <div class="flex flex-col items-end gap-1.5">
+                      ${!isPendingVerif ? `
+                        <button onclick="window.taraletsApp.openLiveGpsTracker('${b.id}')"
+                          class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-xs font-black transition flex items-center gap-1 shadow-sm">
+                          🛰️ Live GPS
+                        </button>
+                      ` : ''}
                       <button onclick="window.taraletsApp.viewDriverOnPassengerMap('${b.tripId}')"
                         class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs">
-                        📍 Track GPS
+                        📍 Route Map
                       </button>
                       ${!isPendingVerif ? `
                         <button onclick="window.taraletsApp.openChat('${b.id}')"
-                          class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1">
-                          💬 Chat Driver
+                          class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg transition flex items-center gap-1">
+                          💬 Chat
                         </button>
                         <button onclick="window.taraletsApp.openDriverQrModal('${b.id}')"
                           class="text-xs font-semibold text-blue-700 hover:text-blue-800 flex items-center gap-1">
@@ -1521,6 +1535,23 @@ class TaraLetsApp {
                       `}
                     </div>
                   </div>
+
+                  ${!isPendingVerif ? `
+                    <!-- Live GPS Active Telemetry Banner -->
+                    <div class="mt-2.5 p-2.5 bg-emerald-950 text-emerald-200 rounded-xl border border-emerald-500/30 flex items-center justify-between text-xs">
+                      <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+                        <div>
+                          <span class="font-extrabold text-white text-[11px] block">LIVE GPS TELEMETRY ACTIVE</span>
+                          <span class="text-[10px] text-emerald-300">Driver &amp; Commuter location broadcast online</span>
+                        </div>
+                      </div>
+                      <button type="button" onclick="window.taraletsApp.openLiveGpsTracker('${b.id}')" class="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs rounded-lg transition shadow-sm flex items-center gap-1 shrink-0">
+                        <span>🛰️</span>
+                        <span>Track GPS</span>
+                      </button>
+                    </div>
+                  ` : ''}
 
                   <!-- Payment Mode Pill -->
                   <div class="mt-3 p-2.5 bg-white rounded-lg border border-slate-100 flex items-center justify-between text-xs">
@@ -2623,6 +2654,174 @@ class TaraLetsApp {
     }
     this.renderApiKeysList();
     this.showToast(`API ${res.status} OK - Received response`, 'success');
+  }
+
+  // ==========================================
+  // LIVE GPS RADAR (DRIVER & COMMUTER DUAL TRACKING)
+  // ==========================================
+
+  openLiveGpsTracker(bookingId = null) {
+    const modal = document.getElementById('modal-live-gps-tracker');
+    if (!modal) return;
+
+    let targetBooking = null;
+    const allBookings = storage.getBookings();
+
+    if (bookingId) {
+      targetBooking = allBookings.find(b => b.id === bookingId);
+    } else {
+      const currentRole = storage.getActiveRole();
+      if (currentRole === 'driver') {
+        const curDriver = storage.getCurrentDriver();
+        targetBooking = allBookings.find(b => b.driverId === curDriver.id && (b.status === 'confirmed' || b.status === 'in_transit'));
+      } else {
+        const curPax = storage.getCurrentPassenger();
+        targetBooking = allBookings.find(b => b.passengerId === curPax.id && (b.status === 'confirmed' || b.status === 'in_transit'));
+      }
+      if (!targetBooking) {
+        targetBooking = allBookings.find(b => b.status === 'confirmed') || allBookings[0];
+      }
+    }
+
+    if (!targetBooking) {
+      this.showToast('No confirmed booking available for live GPS tracking yet.', 'warning');
+      return;
+    }
+
+    this.activeTrackingBookingId = targetBooking.id;
+    const trip = storage.getTripById(targetBooking.tripId) || storage.getTrips()[0];
+    const passenger = storage.getPassengerById(targetBooking.passengerId) || storage.getPassengers()[0];
+
+    // Populate telemetry details
+    const driverNameEl = document.getElementById('gps-driver-name');
+    const driverVehicleEl = document.getElementById('gps-driver-vehicle');
+    const paxNameEl = document.getElementById('gps-pax-name');
+    const paxPickupEl = document.getElementById('gps-pax-pickup');
+
+    if (driverNameEl) driverNameEl.textContent = targetBooking.driverName || trip.driverName;
+    if (driverVehicleEl) driverVehicleEl.textContent = `${targetBooking.vehicleModel || trip.vehicleModel} • ${trip.plate || 'Verified'}`;
+    if (paxNameEl) paxNameEl.textContent = targetBooking.passengerName || passenger.name;
+    if (paxPickupEl) paxPickupEl.textContent = targetBooking.pickupPoint || passenger.pickupLocation;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    setTimeout(() => {
+      this.confirmedGpsMapManager.init();
+      const telemetry = this.confirmedGpsMapManager.renderConfirmedBookingLiveGps(trip, passenger, targetBooking, this.simProgress);
+      if (telemetry) {
+        const distEl = document.getElementById('gps-dist-counter');
+        const etaEl = document.getElementById('gps-eta-counter');
+        const floatEl = document.getElementById('gps-floating-status');
+        if (distEl) distEl.textContent = `~${telemetry.distFormatted}`;
+        if (etaEl) etaEl.textContent = `ETA ~${telemetry.etaMins} mins`;
+        if (floatEl) floatEl.textContent = `Driver is ~${telemetry.distFormatted} away from ${passenger.name}'s pickup point`;
+      }
+      this.confirmedGpsMapManager.invalidateSize();
+    }, 250);
+  }
+
+  openLiveGpsTrackerForPassenger(passengerId) {
+    const allBookings = storage.getBookings();
+    const curDriver = storage.getCurrentDriver();
+    const booking = allBookings.find(b => b.driverId === curDriver.id && b.passengerId === passengerId) ||
+                    allBookings.find(b => b.passengerId === passengerId);
+    if (booking) {
+      this.openLiveGpsTracker(booking.id);
+    } else {
+      this.openLiveGpsTracker();
+    }
+  }
+
+  recenterGpsMap(target) {
+    if (this.confirmedGpsMapManager) {
+      this.confirmedGpsMapManager.focusOn(target);
+    }
+  }
+
+  toggleGpsSimulation() {
+    const icon = document.getElementById('gps-sim-icon');
+    const label = document.getElementById('gps-sim-label');
+
+    if (this.gpsSimulationInterval) {
+      clearInterval(this.gpsSimulationInterval);
+      this.gpsSimulationInterval = null;
+      if (icon) icon.textContent = '▶️';
+      if (label) label.textContent = 'Live Movement';
+      this.showToast('Driver GPS simulation paused.', 'info');
+      return;
+    }
+
+    if (icon) icon.textContent = '⏸️';
+    if (label) label.textContent = 'Pause Movement';
+    this.showToast('Driver live GPS movement active! Approaching commuter pickup...', 'success');
+
+    this.gpsSimulationInterval = setInterval(() => {
+      this.simProgress += 0.04;
+      if (this.simProgress >= 0.94) {
+        this.simProgress = 0.94;
+        clearInterval(this.gpsSimulationInterval);
+        this.gpsSimulationInterval = null;
+        if (icon) icon.textContent = '▶️';
+        if (label) label.textContent = 'Restart Movement';
+        const floatEl = document.getElementById('gps-floating-status');
+        if (floatEl) floatEl.textContent = '🎉 Driver has arrived at pickup point!';
+        this.showToast('🚗 Driver arrived at passenger pickup location!', 'success');
+        return;
+      }
+
+      const booking = storage.getBookingById(this.activeTrackingBookingId);
+      if (!booking) return;
+      const trip = storage.getTripById(booking.tripId);
+      const pax = storage.getPassengerById(booking.passengerId);
+
+      const tel = this.confirmedGpsMapManager.renderConfirmedBookingLiveGps(trip, pax, booking, this.simProgress);
+      if (tel) {
+        const distEl = document.getElementById('gps-dist-counter');
+        const etaEl = document.getElementById('gps-eta-counter');
+        const floatEl = document.getElementById('gps-floating-status');
+        if (distEl) distEl.textContent = `~${tel.distFormatted}`;
+        if (etaEl) etaEl.textContent = `ETA ~${tel.etaMins} mins`;
+        if (floatEl) floatEl.textContent = `Driver is ~${tel.distFormatted} away (Live speed: 44 km/h)`;
+      }
+    }, 1800);
+  }
+
+  activateDeviceGps() {
+    if (!navigator.geolocation) {
+      this.showToast('Geolocation is not supported by your browser.', 'error');
+      return;
+    }
+
+    this.showToast('Acquiring real device GPS location...', 'info');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const accuracy = Math.round(pos.coords.accuracy || 10);
+
+        const currentRole = storage.getActiveRole();
+        if (currentRole === 'driver') {
+          this.confirmedGpsMapManager.updateLivePositions(lat, lng);
+          this.showToast(`📡 Real driver GPS locked! (Accuracy: ±${accuracy}m)`, 'success');
+        } else {
+          if (this.confirmedGpsMapManager.passengerMarker) {
+            this.confirmedGpsMapManager.passengerMarker.setLatLng([lat, lng]);
+          }
+          this.showToast(`📡 Real commuter GPS locked! (Accuracy: ±${accuracy}m)`, 'success');
+        }
+      },
+      (err) => {
+        this.showToast(`Device GPS: ${err.message || 'Permission required'}. Using corridor GPS telemetry.`, 'info');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+  }
+
+  openChatFromGpsTracker() {
+    if (this.activeTrackingBookingId) {
+      this.openChat(this.activeTrackingBookingId);
+    }
   }
 }
 

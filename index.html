@@ -2203,6 +2203,121 @@
 
     </div>
   </div>
+  <!-- ======================================================= -->
+  <!-- MODAL: LIVE DUAL GPS TRACKER (DRIVER & PASSENGER)       -->
+  <!-- ======================================================= -->
+  <div id="modal-live-gps-tracker" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-2.5 sm:p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[94vh] flex flex-col transform transition-all">
+      
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 p-4 text-white flex items-center justify-between shrink-0 border-b border-emerald-500/20">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 text-lg border border-emerald-400/30">
+            &#128752;
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-extrabold text-sm sm:text-base text-white">Live GPS Radar &amp; Telemetry</h3>
+              <span class="text-[9px] uppercase font-black bg-emerald-500 text-emerald-950 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 animate-ping"></span>
+                <span>Active Fix</span>
+              </span>
+            </div>
+            <p id="gps-tracker-subtitle" class="text-[11px] text-emerald-200/80 mt-0.5">Real-time driver vehicle &amp; commuter pickup GPS tracking</p>
+          </div>
+        </div>
+        <button data-close-modal="modal-live-gps-tracker" class="text-white/70 hover:text-white p-1 rounded-lg">
+          &times;
+        </button>
+      </div>
+
+      <!-- Live Dual Telemetry Strip -->
+      <div class="bg-slate-900 text-white p-3 sm:p-3.5 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs shrink-0">
+        
+        <!-- Driver Telemetry Box -->
+        <div class="bg-slate-800/90 p-2.5 rounded-xl border border-emerald-500/20 flex items-center justify-between">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-xl p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300">&#128663;</span>
+            <div class="min-w-0">
+              <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">Driver Vehicle</span>
+              <h4 id="gps-driver-name" class="font-extrabold text-xs text-white truncate">Engr. Marco Reyes</h4>
+              <p id="gps-driver-vehicle" class="text-[10px] text-slate-300 truncate">Toyota Vios &bull; NCA 4819</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span id="gps-driver-speed" class="text-xs font-black font-mono text-emerald-400 block">42 km/h</span>
+            <span id="gps-driver-status" class="text-[9px] text-slate-400 uppercase font-mono">En Route</span>
+          </div>
+        </div>
+
+        <!-- Passenger Telemetry Box -->
+        <div class="bg-slate-800/90 p-2.5 rounded-xl border border-blue-500/20 flex items-center justify-between">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-xl p-1.5 rounded-lg bg-blue-500/20 text-blue-300">&#128694;</span>
+            <div class="min-w-0">
+              <span class="text-[10px] text-blue-400 font-bold uppercase tracking-wider block">Commuter Pickup</span>
+              <h4 id="gps-pax-name" class="font-extrabold text-xs text-white truncate">Miguel Santos</h4>
+              <p id="gps-pax-pickup" class="text-[10px] text-slate-300 truncate">Katipunan Ave / Ateneo</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span id="gps-dist-counter" class="text-xs font-black font-mono text-blue-300 block">~850 m</span>
+            <span id="gps-eta-counter" class="text-[9px] text-amber-300 font-bold uppercase font-mono">ETA 3 mins</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Map Container -->
+      <div class="relative flex-1 min-h-[300px] sm:min-h-[380px] bg-slate-100">
+        <div id="confirmed-booking-map" class="w-full h-full"></div>
+
+        <!-- Floating GPS Quick Status Pill -->
+        <div class="absolute top-3 left-3 z-[1000] bg-slate-950/85 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1.5 rounded-full border border-emerald-400/30 flex items-center gap-2 shadow-lg">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span id="gps-floating-status">Driver approaching pickup point</span>
+        </div>
+
+        <!-- Map Recenter / Focus Controls -->
+        <div class="absolute bottom-3 right-3 z-[1000] flex flex-col gap-1.5 shadow-md">
+          <button type="button" onclick="window.taraletsApp.recenterGpsMap('driver')" class="px-2.5 py-1.5 bg-white/95 hover:bg-white text-slate-800 text-[11px] font-bold rounded-xl border border-slate-200 shadow-sm flex items-center gap-1 transition" title="Center on Driver">
+            <span>&#128663; Driver</span>
+          </button>
+          <button type="button" onclick="window.taraletsApp.recenterGpsMap('passenger')" class="px-2.5 py-1.5 bg-white/95 hover:bg-white text-slate-800 text-[11px] font-bold rounded-xl border border-slate-200 shadow-sm flex items-center gap-1 transition" title="Center on Commuter">
+            <span>&#128694; Commuter</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Interactive Action Bar -->
+      <div class="p-3 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0 text-xs">
+        <div class="flex items-center gap-2">
+          <!-- Real Device Geolocation Button -->
+          <button type="button" id="btn-device-gps" onclick="window.taraletsApp.activateDeviceGps()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-200 transition flex items-center gap-1.5 shadow-2xs">
+            <span>&#128225;</span>
+            <span class="hidden sm:inline">Use Device GPS</span>
+            <span class="sm:hidden">My GPS</span>
+          </button>
+          <!-- Simulate Approach Button -->
+          <button type="button" id="btn-simulate-gps" onclick="window.taraletsApp.toggleGpsSimulation()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-xl border border-emerald-200 transition flex items-center gap-1.5 shadow-2xs">
+            <span id="gps-sim-icon">&#9654;&#65039;</span>
+            <span id="gps-sim-label">Live Movement</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-gps-chat" onclick="window.taraletsApp.openChatFromGpsTracker()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl transition flex items-center gap-1.5 shadow-sm">
+            <span>&#128172;</span>
+            <span>Chat</span>
+          </button>
+          <button type="button" data-close-modal="modal-live-gps-tracker" class="px-3 py-1.5 font-bold text-slate-600 hover:text-slate-800 transition">
+            Close
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
   <!-- ================= MOBILE & TABLET BOTTOM APP BAR ================= -->
   <nav class="glass-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/90 px-1.5 py-1 safe-bottom-nav lg:hidden">
     <div class="max-w-md mx-auto grid grid-cols-6 gap-0.5 text-center">

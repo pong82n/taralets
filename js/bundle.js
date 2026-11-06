@@ -1920,12 +1920,13 @@ class CommuteMapManager {
       const paxIcon = L.divIcon({
         className: 'custom-map-icon',
         html: `
-          <div style="background-color: ${isBooked ? '#10b981' : '#f59e0b'}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.25); border: 2px solid white; font-size: 14px; font-weight: bold;">
-            ${isBooked ? '✓' : '🧍'}
+          <div class="${isBooked ? 'pax-gps-pulse-beacon' : ''}" style="background-color: ${isBooked ? '#10b981' : '#f59e0b'}; width: ${isBooked ? '36px' : '32px'}; height: ${isBooked ? '36px' : '32px'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.25); border: 2.5px solid white; font-size: ${isBooked ? '16px' : '14px'}; font-weight: bold; position: relative;">
+            ${isBooked ? '🚶' : '🧍'}
+            ${isBooked ? '<span style="position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: #22c55e; border: 2px solid white; border-radius: 50%;"></span>' : ''}
           </div>
         `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        iconSize: isBooked ? [36, 36] : [32, 32],
+        iconAnchor: isBooked ? [18, 18] : [16, 16]
       });
 
       const paxMarker = L.marker([p.pickupLat, p.pickupLng], { icon: paxIcon }).addTo(this.markersLayer);
@@ -1934,7 +1935,7 @@ class CommuteMapManager {
         <div class="p-2 text-sm" style="min-width: 190px;">
           <div class="flex items-center gap-2 mb-1">
             <span class="px-2 py-0.5 text-[11px] font-bold rounded ${isBooked ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-              ${isBooked ? 'Booked Co-Passenger' : `${item.match.score}% Work Match`}
+              ${isBooked ? 'Booked Co-Passenger (Live GPS)' : `${item.match.score}% Work Match`}
             </span>
           </div>
           <div class="font-bold text-gray-900">${p.name}</div>
@@ -1946,8 +1947,12 @@ class CommuteMapManager {
               Book this Passenger
             </button>
           ` : isBooked ? `
-            <div class="mt-2 text-center text-xs font-semibold text-emerald-700 bg-emerald-50 py-1 rounded">
-              Confirmed on this trip!
+            <div class="mt-2 text-center text-xs font-semibold text-emerald-700 bg-emerald-50 py-1.5 px-2 rounded-lg border border-emerald-200">
+              <span class="block font-black text-emerald-800">✓ Confirmed Passenger GPS Live</span>
+              <button type="button" onclick="window.taraletsApp.openLiveGpsTrackerForPassenger('${p.id}')" class="mt-1.5 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] py-1 px-2 rounded transition flex items-center justify-center gap-1">
+                <span>🛰️</span>
+                <span>Track Dual GPS</span>
+              </button>
             </div>
           ` : `
             <div class="mt-2 text-center text-xs text-gray-400 bg-gray-50 py-1 rounded">
@@ -2135,6 +2140,193 @@ class CommuteMapManager {
       this.map.fitBounds(group.getBounds().pad(0.22));
     } catch (e) {
       this.map.setView([driverGpsLat, driverGpsLng], 13);
+    }
+  }
+
+  renderConfirmedBookingLiveGps(trip, passenger, booking, progress = 0.52) {
+    if (!this.map) this.init();
+    if (!this.map || !trip || !passenger) return null;
+
+    this.markersLayer.clearLayers();
+    this.routeLayer.clearLayers();
+
+    const isMotorcycle = trip.vehicleType === 'motorcycle';
+    const routeColor = isMotorcycle ? '#10b981' : '#3b82f6';
+
+    const originLat = Number(trip.originLat) || 14.7176;
+    const originLng = Number(trip.originLng) || 121.0601;
+    const destLat = Number(trip.destinationLat) || 14.5507;
+    const destLng = Number(trip.destinationLng) || 121.0509;
+
+    const paxLat = Number(passenger.pickupLat) || (originLat + (destLat - originLat) * 0.62);
+    const paxLng = Number(passenger.pickupLng) || (originLng + (destLng - originLng) * 0.62);
+
+    // Calculate simulated driver GPS location along corridor approaching passenger
+    const safeProgress = Math.min(0.96, Math.max(0.05, progress));
+    const driverGpsLat = originLat + (paxLat - originLat) * safeProgress;
+    const driverGpsLng = originLng + (paxLng - originLng) * safeProgress;
+
+    // Approximate distance between driver & passenger
+    const dLat = (paxLat - driverGpsLat) * 111;
+    const dLng = (paxLng - driverGpsLng) * 111 * Math.cos(driverGpsLat * (Math.PI / 180));
+    const distKm = Math.max(0.1, Math.sqrt(dLat * dLat + dLng * dLng));
+    const distFormatted = distKm < 1 ? `${Math.round(distKm * 1000)} m` : `${distKm.toFixed(1)} km`;
+    const etaMins = Math.max(1, Math.round(distKm * 2.8));
+
+    this.driverPos = [driverGpsLat, driverGpsLng];
+    this.paxPos = [paxLat, paxLng];
+
+    // 1. DRIVER LIVE MOVING GPS VEHICLE MARKER (Pulsing Radar Beacon)
+    const driverIcon = L.divIcon({
+      className: 'custom-map-icon',
+      html: `
+        <div class="gps-pulse-beacon" style="background-color: ${routeColor}; width: 44px; height: 44px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; border: 3px solid white; font-size: 20px; position: relative; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+          ${isMotorcycle ? '🏍️' : '🚗'}
+          <span style="position: absolute; top: -3px; right: -3px; width: 14px; height: 14px; background: #22c55e; border: 2.5px solid white; border-radius: 50%; box-shadow: 0 0 8px #22c55e;"></span>
+        </div>
+      `,
+      iconSize: [44, 44],
+      iconAnchor: [22, 22]
+    });
+    this.driverMarker = L.marker([driverGpsLat, driverGpsLng], { icon: driverIcon, zIndexOffset: 1000 }).addTo(this.markersLayer);
+    this.driverMarker.bindPopup(`
+      <div class="p-2.5 text-xs min-w-[210px]">
+        <div class="flex items-center gap-1.5 mb-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
+            LIVE DRIVER GPS
+          </span>
+        </div>
+        <div class="font-extrabold text-sm text-slate-900">${trip.driverName}</div>
+        <div class="text-[11px] text-slate-600 font-semibold mt-0.5">${trip.vehicleModel} (${trip.plate || 'Verified'})</div>
+        <div class="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg space-y-0.5">
+          <div class="text-emerald-950 font-bold flex items-center justify-between">
+            <span>Distance to Pickup:</span>
+            <span>~${distFormatted}</span>
+          </div>
+          <div class="text-emerald-700 font-extrabold flex items-center justify-between">
+            <span>Estimated Arrival:</span>
+            <span>~${etaMins} mins</span>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-1.5">Corridor GPS Signal: 🟢 Active</p>
+      </div>
+    `);
+
+    // 2. COMMUTER / PASSENGER LIVE GPS MARKER (Pulsing Radar Beacon)
+    const paxIcon = L.divIcon({
+      className: 'custom-map-icon',
+      html: `
+        <div class="pax-gps-pulse-beacon" style="background-color: #2563eb; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 14px rgba(37,99,235,0.45); border: 3px solid white; font-size: 19px; position: relative;">
+          🚶
+          <span style="position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; background: #3b82f6; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 6px #3b82f6;"></span>
+        </div>
+      `,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+    });
+    this.passengerMarker = L.marker([paxLat, paxLng], { icon: paxIcon, zIndexOffset: 800 }).addTo(this.markersLayer);
+    this.passengerMarker.bindPopup(`
+      <div class="p-2.5 text-xs min-w-[200px]">
+        <div class="flex items-center gap-1.5 mb-1">
+          <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-black uppercase">
+            COMMUTER PICKUP GPS
+          </span>
+        </div>
+        <div class="font-extrabold text-sm text-slate-900">${passenger.name}</div>
+        <div class="text-[11px] text-slate-600 font-medium mt-0.5">📍 ${passenger.pickupLocation}</div>
+        <div class="text-[10px] text-blue-600 font-bold mt-1.5">Status: Waiting at designated pickup spot</div>
+      </div>
+    `);
+
+    // 3. WORKPLACE HUB DESTINATION MARKER
+    const destIcon = L.divIcon({
+      className: 'custom-map-icon',
+      html: `
+        <div style="background-color: #8b5cf6; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 12px rgba(139,92,246,0.4); border: 2.5px solid white; font-size: 17px;">
+          🏢
+        </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+    const destMarker = L.marker([destLat, destLng], { icon: destIcon }).addTo(this.markersLayer);
+    destMarker.bindPopup(`
+      <div class="p-2 text-xs">
+        <span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-purple-100 text-purple-800 uppercase mb-1">
+          Workplace Destination
+        </span>
+        <h4 class="font-bold text-slate-900">${trip.destinationName}</h4>
+        <p class="text-slate-500">${passenger.company}</p>
+      </div>
+    `);
+
+    // 4. CORRIDOR POLYLINES
+    const corridorCoords = [
+      [originLat, originLng],
+      [driverGpsLat, driverGpsLng],
+      [paxLat, paxLng],
+      [destLat, destLng]
+    ];
+
+    // Glow background
+    L.polyline(corridorCoords, {
+      color: routeColor,
+      weight: 8,
+      opacity: 0.3
+    }).addTo(this.routeLayer);
+
+    // Active path
+    L.polyline(corridorCoords, {
+      color: routeColor,
+      weight: 5,
+      opacity: 0.9,
+      dashArray: isMotorcycle ? '6, 8' : null
+    }).addTo(this.routeLayer);
+
+    // Distance line between driver and passenger (pulsing dash)
+    L.polyline([[driverGpsLat, driverGpsLng], [paxLat, paxLng]], {
+      color: '#10b981',
+      weight: 4,
+      dashArray: '4, 6',
+      opacity: 0.95
+    }).addTo(this.routeLayer);
+
+    // Fit bounds with padding
+    try {
+      const group = new L.featureGroup([this.markersLayer, this.routeLayer]);
+      this.map.fitBounds(group.getBounds().pad(0.2));
+    } catch (e) {
+      this.map.setView([driverGpsLat, driverGpsLng], 13);
+    }
+
+    return {
+      distKm,
+      distFormatted,
+      etaMins,
+      driverLat: driverGpsLat,
+      driverLng: driverGpsLng,
+      paxLat,
+      paxLng,
+      trip,
+      passenger,
+      booking
+    };
+  }
+
+  updateLivePositions(driverLat, driverLng) {
+    if (this.driverMarker) {
+      this.driverMarker.setLatLng([driverLat, driverLng]);
+      this.driverPos = [driverLat, driverLng];
+    }
+  }
+
+  focusOn(role = 'driver') {
+    if (!this.map) return;
+    if (role === 'driver' && this.driverPos) {
+      this.map.flyTo(this.driverPos, 15, { animate: true, duration: 0.8 });
+    } else if (role === 'passenger' && this.paxPos) {
+      this.map.flyTo(this.paxPos, 15, { animate: true, duration: 0.8 });
     }
   }
 
@@ -2342,10 +2534,14 @@ class TaraLetsApp {
   constructor() {
     this.mapManager = new CommuteMapManager('commute-map');
     this.passengerMapManager = new CommuteMapManager('passenger-commute-map');
+    this.confirmedGpsMapManager = new CommuteMapManager('confirmed-booking-map');
     this.selectedTripId = null;
     this.selectedPassengerMapTripId = null;
     this.selectedBookingPassengerId = null;
     this.requestingTripId = null;
+    this.activeTrackingBookingId = null;
+    this.gpsSimulationInterval = null;
+    this.simProgress = 0.52;
   }
 
   init() {
@@ -3642,7 +3838,11 @@ class TaraLetsApp {
           </div>
 
           <div class="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button onclick="window.taraletsApp.openLiveGpsTracker('${b.id}')"
+                class="px-2.5 py-1 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg flex items-center gap-1 transition border border-emerald-200" title="Track Live GPS Location of Driver & Passenger">
+                🛰️ Live GPS
+              </button>
               <button onclick="window.taraletsApp.openChat('${b.id}')"
                 class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg flex items-center gap-1 transition">
                 💬 Chat
@@ -3831,14 +4031,20 @@ class TaraLetsApp {
                       </div>
                     </div>
                     <div class="flex flex-col items-end gap-1.5">
+                      ${!isPendingVerif ? `
+                        <button onclick="window.taraletsApp.openLiveGpsTracker('${b.id}')"
+                          class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-xs font-black transition flex items-center gap-1 shadow-sm">
+                          🛰️ Live GPS
+                        </button>
+                      ` : ''}
                       <button onclick="window.taraletsApp.viewDriverOnPassengerMap('${b.tripId}')"
                         class="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-2xs">
-                        📍 Track GPS
+                        📍 Route Map
                       </button>
                       ${!isPendingVerif ? `
                         <button onclick="window.taraletsApp.openChat('${b.id}')"
-                          class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1">
-                          💬 Chat Driver
+                          class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg transition flex items-center gap-1">
+                          💬 Chat
                         </button>
                         <button onclick="window.taraletsApp.openDriverQrModal('${b.id}')"
                           class="text-xs font-semibold text-blue-700 hover:text-blue-800 flex items-center gap-1">
@@ -3851,6 +4057,23 @@ class TaraLetsApp {
                       `}
                     </div>
                   </div>
+
+                  ${!isPendingVerif ? `
+                    <!-- Live GPS Active Telemetry Banner -->
+                    <div class="mt-2.5 p-2.5 bg-emerald-950 text-emerald-200 rounded-xl border border-emerald-500/30 flex items-center justify-between text-xs">
+                      <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+                        <div>
+                          <span class="font-extrabold text-white text-[11px] block">LIVE GPS TELEMETRY ACTIVE</span>
+                          <span class="text-[10px] text-emerald-300">Driver &amp; Commuter location broadcast online</span>
+                        </div>
+                      </div>
+                      <button type="button" onclick="window.taraletsApp.openLiveGpsTracker('${b.id}')" class="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs rounded-lg transition shadow-sm flex items-center gap-1 shrink-0">
+                        <span>🛰️</span>
+                        <span>Track GPS</span>
+                      </button>
+                    </div>
+                  ` : ''}
 
                   <!-- Payment Mode Pill -->
                   <div class="mt-3 p-2.5 bg-white rounded-lg border border-slate-100 flex items-center justify-between text-xs">
@@ -4953,6 +5176,174 @@ class TaraLetsApp {
     }
     this.renderApiKeysList();
     this.showToast(`API ${res.status} OK - Received response`, 'success');
+  }
+
+  // ==========================================
+  // LIVE GPS RADAR (DRIVER & COMMUTER DUAL TRACKING)
+  // ==========================================
+
+  openLiveGpsTracker(bookingId = null) {
+    const modal = document.getElementById('modal-live-gps-tracker');
+    if (!modal) return;
+
+    let targetBooking = null;
+    const allBookings = storage.getBookings();
+
+    if (bookingId) {
+      targetBooking = allBookings.find(b => b.id === bookingId);
+    } else {
+      const currentRole = storage.getActiveRole();
+      if (currentRole === 'driver') {
+        const curDriver = storage.getCurrentDriver();
+        targetBooking = allBookings.find(b => b.driverId === curDriver.id && (b.status === 'confirmed' || b.status === 'in_transit'));
+      } else {
+        const curPax = storage.getCurrentPassenger();
+        targetBooking = allBookings.find(b => b.passengerId === curPax.id && (b.status === 'confirmed' || b.status === 'in_transit'));
+      }
+      if (!targetBooking) {
+        targetBooking = allBookings.find(b => b.status === 'confirmed') || allBookings[0];
+      }
+    }
+
+    if (!targetBooking) {
+      this.showToast('No confirmed booking available for live GPS tracking yet.', 'warning');
+      return;
+    }
+
+    this.activeTrackingBookingId = targetBooking.id;
+    const trip = storage.getTripById(targetBooking.tripId) || storage.getTrips()[0];
+    const passenger = storage.getPassengerById(targetBooking.passengerId) || storage.getPassengers()[0];
+
+    // Populate telemetry details
+    const driverNameEl = document.getElementById('gps-driver-name');
+    const driverVehicleEl = document.getElementById('gps-driver-vehicle');
+    const paxNameEl = document.getElementById('gps-pax-name');
+    const paxPickupEl = document.getElementById('gps-pax-pickup');
+
+    if (driverNameEl) driverNameEl.textContent = targetBooking.driverName || trip.driverName;
+    if (driverVehicleEl) driverVehicleEl.textContent = `${targetBooking.vehicleModel || trip.vehicleModel} • ${trip.plate || 'Verified'}`;
+    if (paxNameEl) paxNameEl.textContent = targetBooking.passengerName || passenger.name;
+    if (paxPickupEl) paxPickupEl.textContent = targetBooking.pickupPoint || passenger.pickupLocation;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    setTimeout(() => {
+      this.confirmedGpsMapManager.init();
+      const telemetry = this.confirmedGpsMapManager.renderConfirmedBookingLiveGps(trip, passenger, targetBooking, this.simProgress);
+      if (telemetry) {
+        const distEl = document.getElementById('gps-dist-counter');
+        const etaEl = document.getElementById('gps-eta-counter');
+        const floatEl = document.getElementById('gps-floating-status');
+        if (distEl) distEl.textContent = `~${telemetry.distFormatted}`;
+        if (etaEl) etaEl.textContent = `ETA ~${telemetry.etaMins} mins`;
+        if (floatEl) floatEl.textContent = `Driver is ~${telemetry.distFormatted} away from ${passenger.name}'s pickup point`;
+      }
+      this.confirmedGpsMapManager.invalidateSize();
+    }, 250);
+  }
+
+  openLiveGpsTrackerForPassenger(passengerId) {
+    const allBookings = storage.getBookings();
+    const curDriver = storage.getCurrentDriver();
+    const booking = allBookings.find(b => b.driverId === curDriver.id && b.passengerId === passengerId) ||
+                    allBookings.find(b => b.passengerId === passengerId);
+    if (booking) {
+      this.openLiveGpsTracker(booking.id);
+    } else {
+      this.openLiveGpsTracker();
+    }
+  }
+
+  recenterGpsMap(target) {
+    if (this.confirmedGpsMapManager) {
+      this.confirmedGpsMapManager.focusOn(target);
+    }
+  }
+
+  toggleGpsSimulation() {
+    const icon = document.getElementById('gps-sim-icon');
+    const label = document.getElementById('gps-sim-label');
+
+    if (this.gpsSimulationInterval) {
+      clearInterval(this.gpsSimulationInterval);
+      this.gpsSimulationInterval = null;
+      if (icon) icon.textContent = '▶️';
+      if (label) label.textContent = 'Live Movement';
+      this.showToast('Driver GPS simulation paused.', 'info');
+      return;
+    }
+
+    if (icon) icon.textContent = '⏸️';
+    if (label) label.textContent = 'Pause Movement';
+    this.showToast('Driver live GPS movement active! Approaching commuter pickup...', 'success');
+
+    this.gpsSimulationInterval = setInterval(() => {
+      this.simProgress += 0.04;
+      if (this.simProgress >= 0.94) {
+        this.simProgress = 0.94;
+        clearInterval(this.gpsSimulationInterval);
+        this.gpsSimulationInterval = null;
+        if (icon) icon.textContent = '▶️';
+        if (label) label.textContent = 'Restart Movement';
+        const floatEl = document.getElementById('gps-floating-status');
+        if (floatEl) floatEl.textContent = '🎉 Driver has arrived at pickup point!';
+        this.showToast('🚗 Driver arrived at passenger pickup location!', 'success');
+        return;
+      }
+
+      const booking = storage.getBookingById(this.activeTrackingBookingId);
+      if (!booking) return;
+      const trip = storage.getTripById(booking.tripId);
+      const pax = storage.getPassengerById(booking.passengerId);
+
+      const tel = this.confirmedGpsMapManager.renderConfirmedBookingLiveGps(trip, pax, booking, this.simProgress);
+      if (tel) {
+        const distEl = document.getElementById('gps-dist-counter');
+        const etaEl = document.getElementById('gps-eta-counter');
+        const floatEl = document.getElementById('gps-floating-status');
+        if (distEl) distEl.textContent = `~${tel.distFormatted}`;
+        if (etaEl) etaEl.textContent = `ETA ~${tel.etaMins} mins`;
+        if (floatEl) floatEl.textContent = `Driver is ~${tel.distFormatted} away (Live speed: 44 km/h)`;
+      }
+    }, 1800);
+  }
+
+  activateDeviceGps() {
+    if (!navigator.geolocation) {
+      this.showToast('Geolocation is not supported by your browser.', 'error');
+      return;
+    }
+
+    this.showToast('Acquiring real device GPS location...', 'info');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const accuracy = Math.round(pos.coords.accuracy || 10);
+
+        const currentRole = storage.getActiveRole();
+        if (currentRole === 'driver') {
+          this.confirmedGpsMapManager.updateLivePositions(lat, lng);
+          this.showToast(`📡 Real driver GPS locked! (Accuracy: ±${accuracy}m)`, 'success');
+        } else {
+          if (this.confirmedGpsMapManager.passengerMarker) {
+            this.confirmedGpsMapManager.passengerMarker.setLatLng([lat, lng]);
+          }
+          this.showToast(`📡 Real commuter GPS locked! (Accuracy: ±${accuracy}m)`, 'success');
+        }
+      },
+      (err) => {
+        this.showToast(`Device GPS: ${err.message || 'Permission required'}. Using corridor GPS telemetry.`, 'info');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+  }
+
+  openChatFromGpsTracker() {
+    if (this.activeTrackingBookingId) {
+      this.openChat(this.activeTrackingBookingId);
+    }
   }
 }
 
