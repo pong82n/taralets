@@ -43,7 +43,7 @@ class TaraLetsApp {
       }
 
       if (actionParam === 'signup' || actionParam === 'register') {
-        setTimeout(() => this.openPassengerSignupModal(), 400);
+        setTimeout(() => this.openSignupModal(roleParam === 'driver' ? 'driver' : 'commuter'), 400);
       } else if (actionParam === 'login' || actionParam === 'signin') {
         setTimeout(() => this.openPassengerLoginModal(), 400);
       } else if (actionParam === 'wallet') {
@@ -195,6 +195,12 @@ class TaraLetsApp {
       signupForm.addEventListener('submit', (e) => this.handlePassengerSignupSubmit(e));
     }
 
+    // Driver Sign-Up Form
+    const driverSignupForm = document.getElementById('form-driver-signup');
+    if (driverSignupForm) {
+      driverSignupForm.addEventListener('submit', (e) => this.handleDriverSignupSubmit(e));
+    }
+
     // Passenger Log-In Form
     const loginForm = document.getElementById('form-passenger-login');
     if (loginForm) {
@@ -205,6 +211,12 @@ class TaraLetsApp {
     }
 
     // Global custom events
+    window.addEventListener('taralets:driver-registered', (e) => {
+      this.showToast(`🚗 Welcome Driver ${e.detail.driver.name}! Your carpool trip is now LIVE for coworkers!`, "success");
+      this.syncActiveRoleUI();
+      this.render();
+    });
+
     window.addEventListener('taralets:passenger-registered', (e) => {
       this.showToast(`🎉 Welcome to TaraLets, ${e.detail.name}! Commuter Mode enabled.`, "success");
       this.syncActiveRoleUI();
@@ -673,11 +685,76 @@ class TaraLetsApp {
     `).join('');
   }
 
-  openPassengerSignupModal() {
+  openSignupModal(initialRole = null) {
     const modal = document.getElementById('modal-passenger-signup');
     if (!modal) return;
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+
+    const roleToUse = initialRole || (storage.getActiveRole() === 'driver' && !storage.isCommuterOnlyMode() ? 'driver' : 'commuter');
+    this.setSignupRole(roleToUse);
+  }
+
+  openPassengerSignupModal() {
+    this.openSignupModal('commuter');
+  }
+
+  openDriverSignupModal() {
+    this.openSignupModal('driver');
+  }
+
+  setSignupRole(role) {
+    const isDriver = role === 'driver';
+    const commuterTab = document.getElementById('btn-signup-tab-commuter');
+    const driverTab = document.getElementById('btn-signup-tab-driver');
+    const commuterSection = document.getElementById('section-signup-commuter');
+    const driverSection = document.getElementById('section-signup-driver');
+    const modalBadge = document.getElementById('signup-modal-badge');
+    const modalTitle = document.getElementById('signup-modal-title');
+    const modalSubtitle = document.getElementById('signup-modal-subtitle');
+    const modalIcon = document.getElementById('signup-modal-header-icon');
+
+    if (isDriver) {
+      if (driverTab) {
+        driverTab.className = "p-2.5 sm:p-3 rounded-xl border-2 text-left transition flex items-center gap-2.5 bg-white border-emerald-600 shadow-sm ring-1 ring-emerald-500/20";
+      }
+      if (commuterTab) {
+        commuterTab.className = "p-2.5 sm:p-3 rounded-xl border-2 text-left transition flex items-center gap-2.5 bg-slate-50 border-slate-200 text-slate-600 hover:border-blue-300";
+      }
+      if (driverSection) driverSection.classList.remove('hidden');
+      if (commuterSection) commuterSection.classList.add('hidden');
+
+      if (modalBadge) {
+        modalBadge.textContent = "Driver Onboarding";
+        modalBadge.className = "text-[10px] uppercase tracking-wider font-extrabold bg-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30";
+      }
+      if (modalTitle) modalTitle.textContent = "Sign Up as Colleague Driver";
+      if (modalSubtitle) modalSubtitle.textContent = "Share empty seats, earn fair gas shares, and travel safely with coworkers";
+      if (modalIcon) {
+        modalIcon.textContent = "🚗";
+        modalIcon.className = "w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center justify-center text-2xl shadow-inner";
+      }
+    } else {
+      if (commuterTab) {
+        commuterTab.className = "p-2.5 sm:p-3 rounded-xl border-2 text-left transition flex items-center gap-2.5 bg-white border-blue-600 shadow-sm ring-1 ring-blue-500/20";
+      }
+      if (driverTab) {
+        driverTab.className = "p-2.5 sm:p-3 rounded-xl border-2 text-left transition flex items-center gap-2.5 bg-slate-50 border-slate-200 text-slate-600 hover:border-emerald-300";
+      }
+      if (commuterSection) commuterSection.classList.remove('hidden');
+      if (driverSection) driverSection.classList.add('hidden');
+
+      if (modalBadge) {
+        modalBadge.textContent = "Passenger Onboarding";
+        modalBadge.className = "text-[10px] uppercase tracking-wider font-extrabold bg-blue-500/40 text-blue-200 px-2 py-0.5 rounded-full border border-blue-400/30";
+      }
+      if (modalTitle) modalTitle.textContent = "Sign Up as Office Commuter";
+      if (modalSubtitle) modalSubtitle.textContent = "Connect with colleagues driving to your workplace and request seats";
+      if (modalIcon) {
+        modalIcon.textContent = "🚶";
+        modalIcon.className = "w-10 h-10 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center justify-center text-2xl shadow-inner";
+      }
+    }
   }
 
   handlePassengerSignupSubmit(e) {
@@ -726,6 +803,66 @@ class TaraLetsApp {
 
       setTimeout(() => {
         this.scrollToSection('passenger-matching-drivers');
+      }, 350);
+
+    } catch (err) {
+      this.showToast(err.message, "error");
+    }
+  }
+
+  handleDriverSignupSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('driver-signup-name')?.value;
+    const phone = document.getElementById('driver-signup-phone')?.value;
+    const email = document.getElementById('driver-signup-email')?.value;
+    const workplaceId = document.getElementById('driver-signup-workplace-hub')?.value;
+    const company = document.getElementById('driver-signup-company')?.value;
+    const workSchedule = document.getElementById('driver-signup-schedule')?.value;
+    
+    const vehicleType = document.querySelector('input[name="driver-signup-vehicle-type"]:checked')?.value || 'car';
+    const vehicleModel = document.getElementById('driver-signup-vehicle-model')?.value;
+    const plate = document.getElementById('driver-signup-plate')?.value;
+    const seatsCapacity = document.getElementById('driver-signup-seats')?.value;
+    
+    const originName = document.getElementById('driver-signup-origin')?.value;
+    const departureTime = document.getElementById('driver-signup-departure-time')?.value;
+    const farePerSeat = document.getElementById('driver-signup-fare')?.value;
+    const payoutPhone = document.getElementById('driver-signup-payout-phone')?.value || phone;
+    const avatar = document.querySelector('input[name="driver-signup-avatar"]:checked')?.value;
+
+    try {
+      const { driver, trip } = storage.registerDriver({
+        name,
+        phone,
+        email,
+        workplaceId,
+        company,
+        workSchedule,
+        vehicleType,
+        vehicleModel,
+        plate,
+        seatsCapacity,
+        originName,
+        departureTime,
+        farePerSeat,
+        payoutPhone,
+        avatar
+      });
+
+      const modal = document.getElementById('modal-passenger-signup');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      const form = document.getElementById('form-driver-signup');
+      if (form) form.reset();
+
+      this.syncActiveRoleUI();
+      this.render();
+
+      setTimeout(() => {
+        this.scrollToSection('trips-radar-card');
       }, 350);
 
     } catch (err) {

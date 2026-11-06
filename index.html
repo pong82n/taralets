@@ -88,9 +88,10 @@
         </button>
 
         <!-- Commuter Sign-Up Header CTA (Desktop/Tablet) -->
-        <button id="btn-header-signup" onclick="window.taraletsApp.openPassengerSignupModal()" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white rounded-xl text-xs font-extrabold transition shadow-sm" title="Register New Office Commuter Profile">
-          <span>📝</span>
-          <span>Sign Up</span>
+        <!-- Sign-Up Header CTA (Driver or Commuter) -->
+        <button id="btn-header-signup" onclick="window.taraletsApp.openSignupModal()" class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white rounded-xl text-xs font-extrabold transition shadow-sm" title="Register New Driver or Commuter Profile">
+          <span>&#128221;</span>
+          <span class="hidden sm:inline">Sign Up</span>
         </button>
         
         <!-- Persona Quick Selector (Driver) -->
@@ -205,11 +206,17 @@
             </div>
           </div>
 
-          <button onclick="window.taraletsApp.openPostTripModal()" 
-            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="window.taraletsApp.openSignupModal('driver')" class="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5" title="Register New Driver Profile">
+              <span>&#128663;</span>
+              <span class="hidden sm:inline">Sign Up as Driver</span>
+              <span class="sm:hidden">Driver Sign Up</span>
+            </button>
+            <button onclick="window.taraletsApp.openPostTripModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center gap-2">
             <span>+</span>
             <span>Post New Commute Trip</span>
           </button>
+          </div>
         </div>
       </div>
 
@@ -387,7 +394,7 @@
             <span>Log Out</span>
           </button>
 
-          <button id="btn-pax-signup" onclick="window.taraletsApp.openPassengerSignupModal()"
+          <button id="btn-pax-signup" onclick="window.taraletsApp.openSignupModal('commuter')"
             class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-extrabold rounded-xl shadow-sm transition flex items-center gap-1.5" title="Register New Commuter Profile">
             <span>📝</span>
             <span>Sign Up as Commuter</span>
@@ -1467,198 +1474,438 @@
   <!-- ======================================================= -->
   <!-- MODAL 10: PASSENGER / COMMUTER SIGN-UP PROCESS           -->
   <!-- ======================================================= -->
+  <!-- ======================================================= -->
+  <!-- MODAL 10: UNIFIED SIGN-UP (DRIVER OR COMMUTER)          -->
+  <!-- ======================================================= -->
   <div id="modal-passenger-signup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[92vh] flex flex-col transform transition-all">
       
       <!-- Modal Header -->
-      <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 p-5 text-white flex items-center justify-between shrink-0">
+      <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 p-4 sm:p-5 text-white flex items-center justify-between shrink-0 border-b border-emerald-500/20">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-2xl shadow-inner">
-            🚶
+          <div id="signup-modal-header-icon" class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center justify-center text-2xl shadow-inner">
+            &#128694;
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-[10px] uppercase tracking-wider font-extrabold bg-blue-500/40 px-2 py-0.5 rounded-full border border-blue-400/30">
+              <span id="signup-modal-badge" class="text-[10px] uppercase tracking-wider font-extrabold bg-blue-500/40 text-blue-200 px-2 py-0.5 rounded-full border border-blue-400/30">
                 Passenger Onboarding
               </span>
             </div>
-            <h3 class="font-extrabold text-base mt-0.5">Sign Up as Office Commuter</h3>
-            <p class="text-xs text-blue-200">Connect with colleagues driving to your workplace</p>
+            <h3 id="signup-modal-title" class="font-extrabold text-base mt-0.5">Sign Up as Office Commuter</h3>
+            <p id="signup-modal-subtitle" class="text-xs text-emerald-200/80">Connect with colleagues driving to your workplace and request seats</p>
           </div>
         </div>
         <button data-close-modal="modal-passenger-signup" class="text-white/80 hover:text-white p-1 rounded-lg">
-          ✕
+          &times;
         </button>
       </div>
 
-      <!-- Modal Body Form -->
-      <form id="form-passenger-signup" class="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto touch-scroll">
-        
-        <!-- Already Registered Account Banner -->
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <span class="text-lg">🔑</span>
-            <div>
-              <p class="font-bold text-blue-900 text-xs">Already have a commuter account?</p>
-              <p class="text-[11px] text-blue-700">Log in with your registered mobile phone or work email.</p>
-            </div>
-          </div>
-          <button type="button" onclick="window.taraletsApp.switchToLoginFromSignup()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold rounded-lg text-xs transition shrink-0 flex items-center justify-center gap-1">
-            <span>Log In Here</span>
-            <span>→</span>
-          </button>
-        </div>
-
-        <!-- Step 1: Personal Info -->
-        <div>
-          <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span>👤</span>
-            <span>1. Personal &amp; Contact Information</span>
-          </h4>
+      <!-- ROLE SELECTION SWITCHER TABS -->
+      <div class="p-3 bg-slate-100 border-b border-slate-200 shrink-0">
+        <p class="text-[11px] font-bold text-slate-600 mb-2 px-1">Select account type to sign up:</p>
+        <div class="grid grid-cols-2 gap-2">
           
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Full Name <span class="text-red-500">*</span></label>
-              <input type="text" id="signup-name" required placeholder="e.g. Mariella Santos" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Mobile Number <span class="text-red-500">*</span></label>
-              <input type="tel" id="signup-phone" required placeholder="e.g. 0917-888-2345" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
-            </div>
-          </div>
-        </div>
-
-        <!-- Step 2: Workplace & Corporate Verification -->
-        <div class="pt-2 border-t border-slate-100">
-          <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span>🏢</span>
-            <span>2. Workplace &amp; Corporate Verification</span>
-          </h4>
-
-          <div class="space-y-3">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Workplace Business Hub <span class="text-red-500">*</span></label>
-              <select id="signup-workplace-hub" required class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-blue-500">
-                <option value="hub-bgc">Bonifacio Global City (BGC) — Net Park / High Street</option>
-                <option value="hub-makati">Makati CBD — Ayala Ave / PBCom Tower</option>
-                <option value="hub-ortigas">Ortigas Center — Mega Tower / ADB Ave</option>
-                <option value="hub-eastwood">Eastwood City Cyberpark — Cyber One</option>
-                <option value="hub-alabang">Filinvest City Alabang — Northgate</option>
-                <option value="hub-clark">Clark Global City — Berthaphil</option>
-              </select>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Company / Building Name <span class="text-red-500">*</span></label>
-                <input type="text" id="signup-company" required placeholder="e.g. Google PH / Net Park" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
+          <!-- Tab 1: Commuter -->
+          <button type="button" id="btn-signup-tab-commuter" onclick="window.taraletsApp.setSignupRole('commuter')" class="p-2.5 sm:p-3 rounded-xl border-2 text-left transition flex items-center gap-2.5 bg-white border-blue-600 shadow-sm ring-1 ring-blue-500/20">
+            <span class="text-2xl p-1.5 rounded-lg bg-blue-100">&#128694;</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="font-extrabold text-xs sm:text-sm text-slate-900">Office Commuter</span>
               </div>
-
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Corporate Work Email <span class="text-red-500">*</span></label>
-                <input type="email" id="signup-email" required placeholder="e.g. mariella@company.ph" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
-              </div>
+              <p class="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">Find rides &amp; book seats</p>
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Job Title / Role</label>
-                <input type="text" id="signup-job-title" placeholder="e.g. Financial Analyst" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
-              </div>
-
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Employee Badge ID</label>
-                <input type="text" id="signup-badge-id" placeholder="e.g. #EMP-9821" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Step 3: Commute Route & Preferences -->
-        <div class="pt-2 border-t border-slate-100">
-          <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <span>🗺️</span>
-            <span>3. Commute Route &amp; Preferences</span>
-          </h4>
-
-          <div class="space-y-3">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Morning Pickup Landmark / Home Area <span class="text-red-500">*</span></label>
-              <input type="text" id="signup-pickup" required placeholder="e.g. Commonwealth Market / SM Fairview / Katipunan" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
-              <p class="text-[10px] text-slate-400 mt-1">Colleague drivers on this travel corridor will pick you up here.</p>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Daily Work Shift Hours</label>
-                <select id="signup-schedule" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-blue-500">
-                  <option value="08:00 AM - 05:00 PM">08:00 AM - 05:00 PM (Standard Day)</option>
-                  <option value="07:00 AM - 04:00 PM">07:00 AM - 04:00 PM (Early Shift)</option>
-                  <option value="09:00 AM - 06:00 PM">09:00 AM - 06:00 PM (Mid Shift)</option>
-                  <option value="10:00 AM - 07:00 PM">10:00 AM - 07:00 PM (Late Shift)</option>
-                  <option value="09:00 PM - 06:00 AM">09:00 PM - 06:00 AM (Night / BPO)</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Preferred Ride Type</label>
-                <select id="signup-vehicle-pref" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-blue-500">
-                  <option value="any">Any (Car or Motorcycle)</option>
-                  <option value="car">🚗 Car Only (Air-conditioned)</option>
-                  <option value="motorcycle">🏍️ Motorcycle (Fast commute)</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Preferred Payment Mode</label>
-              <select id="signup-payment-mode" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-blue-500">
-                <option value="gcash">💙 GCash</option>
-                <option value="maya">💚 Maya</option>
-                <option value="cash">💵 Cash on Boarding (Kaliwaan)</option>
-                <option value="wallet">⚡ TaraLets Commute Wallet</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Choose Profile Avatar</label>
-              <div class="flex items-center gap-3 overflow-x-auto py-1">
-                <label class="cursor-pointer">
-                  <input type="radio" name="signup-avatar" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" checked class="peer sr-only">
-                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-400">
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="signup-avatar" value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
-                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-400">
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="signup-avatar" value="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
-                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-400">
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="signup-avatar" value="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
-                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-400">
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Submit Button -->
-        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-          <button type="button" data-close-modal="modal-passenger-signup" class="px-4 py-2 font-bold text-slate-500 hover:text-slate-700">
-            Cancel
           </button>
-          <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold rounded-xl shadow-md transition flex items-center gap-1.5">
-            <span>🚀 Complete Sign-Up &amp; Enter Commuter Mode</span>
+
+          <!-- Tab 2: Driver -->
+          <button type="button" id="btn-signup-tab-driver" onclick="window.taraletsApp.setSignupRole('driver')" class="p-2.5 sm:p-3 rounded-xl border-2 text-left transition flex items-center gap-2.5 bg-slate-50 border-slate-200 text-slate-600 hover:border-emerald-300">
+            <span class="text-2xl p-1.5 rounded-lg bg-emerald-100">&#128663;</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="font-extrabold text-xs sm:text-sm text-slate-900">Colleague Driver</span>
+              </div>
+              <p class="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">Share empty seats &amp; earn</p>
+            </div>
           </button>
+
+        </div>
+      </div>
+
+      <!-- Modal Body (Scrollable Container) -->
+      <div class="overflow-y-auto touch-scroll flex-1">
+        
+        <!-- ================= COMMUTER SIGNUP FORM ================= -->
+        <div id="section-signup-commuter">
+          <form id="form-passenger-signup" class="p-4 sm:p-6 space-y-4 text-xs">
+            
+            <!-- Already Registered Account Banner -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">&#128273;</span>
+                <div>
+                  <p class="font-bold text-blue-900 text-xs">Already have an account?</p>
+                  <p class="text-[11px] text-blue-700">Log in with your registered mobile phone or work email.</p>
+                </div>
+              </div>
+              <button type="button" onclick="window.taraletsApp.switchToLoginFromSignup()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold rounded-lg text-xs transition shrink-0 flex items-center justify-center gap-1">
+                <span>Log In Here</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+
+            <!-- Step 1: Personal Info -->
+            <div>
+              <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>&#128100;</span>
+                <span>1. Personal &amp; Contact Information</span>
+              </h4>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Full Name <span class="text-red-500">*</span></label>
+                  <input type="text" id="signup-name" required placeholder="e.g. Mariella Santos" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Mobile Number <span class="text-red-500">*</span></label>
+                  <input type="tel" id="signup-phone" required placeholder="e.g. 0917-888-2345" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Workplace & Corporate Verification -->
+            <div class="pt-2 border-t border-slate-100">
+              <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>&#127970;</span>
+                <span>2. Workplace &amp; Corporate Verification</span>
+              </h4>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Workplace Business Hub <span class="text-red-500">*</span></label>
+                  <select id="signup-workplace-hub" required class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-blue-500">
+                    <option value="hub-bgc">Bonifacio Global City (BGC) â€” Net Park / High Street</option>
+                    <option value="hub-makati">Makati CBD â€” Ayala Ave / PBCom Tower</option>
+                    <option value="hub-ortigas">Ortigas Center â€” Mega Tower / ADB Ave</option>
+                    <option value="hub-eastwood">Eastwood City Cyberpark â€” Cyber One</option>
+                    <option value="hub-alabang">Filinvest City Alabang â€” Northgate</option>
+                    <option value="hub-clark">Clark Global City â€” Berthaphil</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Company / Building Name <span class="text-red-500">*</span></label>
+                    <input type="text" id="signup-company" required placeholder="e.g. Google PH / Net Park" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Corporate Work Email <span class="text-red-500">*</span></label>
+                    <input type="email" id="signup-email" required placeholder="e.g. mariella@company.ph" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Job Title / Role</label>
+                    <input type="text" id="signup-job-title" placeholder="e.g. Financial Analyst" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Employee Badge ID</label>
+                    <input type="text" id="signup-badge-id" placeholder="e.g. #EMP-9821" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Commute Route & Preferences -->
+            <div class="pt-2 border-t border-slate-100">
+              <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>&#128506;</span>
+                <span>3. Commute Route &amp; Preferences</span>
+              </h4>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Morning Pickup Landmark / Home Area <span class="text-red-500">*</span></label>
+                  <input type="text" id="signup-pickup" required placeholder="e.g. Commonwealth Market / SM Fairview / Katipunan" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500">
+                  <p class="text-[10px] text-slate-400 mt-1">Colleague drivers on this travel corridor will pick you up here.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Daily Work Shift Hours</label>
+                    <select id="signup-schedule" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-blue-500">
+                      <option value="08:00 AM - 05:00 PM">08:00 AM - 05:00 PM (Standard Day)</option>
+                      <option value="07:00 AM - 04:00 PM">07:00 AM - 04:00 PM (Early Shift)</option>
+                      <option value="09:00 AM - 06:00 PM">09:00 AM - 06:00 PM (Mid Shift)</option>
+                      <option value="10:00 AM - 07:00 PM">10:00 AM - 07:00 PM (Late Shift)</option>
+                      <option value="09:00 PM - 06:00 AM">09:00 PM - 06:00 AM (Night / BPO)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Preferred Ride Type</label>
+                    <select id="signup-vehicle-pref" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-blue-500">
+                      <option value="any">Any (Car or Motorcycle)</option>
+                      <option value="car">&#128663; Car Only (Air-conditioned)</option>
+                      <option value="motorcycle">&#127949; Motorcycle (Fast commute)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Preferred Payment Mode</label>
+                  <select id="signup-payment-mode" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-blue-500">
+                    <option value="gcash">&#128153; GCash</option>
+                    <option value="maya">&#128154; Maya</option>
+                    <option value="cash">&#128181; Cash on Boarding (Kaliwaan)</option>
+                    <option value="wallet">&#9889; TaraLets Commute Wallet</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Choose Profile Avatar</label>
+                  <div class="flex items-center gap-3 overflow-x-auto py-1">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="signup-avatar" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" checked class="peer sr-only">
+                      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-400">
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="signup-avatar" value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
+                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-400">
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="signup-avatar" value="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
+                      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-400">
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="signup-avatar" value="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
+                      <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-blue-600 peer-checked:ring-2 peer-checked:ring-blue-400">
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Commuter Submit Button -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <button type="button" data-close-modal="modal-passenger-signup" class="px-4 py-2 font-bold text-slate-500 hover:text-slate-700">
+                Cancel
+              </button>
+              <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-extrabold rounded-xl shadow-md transition flex items-center gap-1.5">
+                <span>&#128640; Complete Sign-Up &amp; Enter Commuter Mode</span>
+              </button>
+            </div>
+
+          </form>
         </div>
 
-      </form>
+        <!-- ================= DRIVER SIGNUP FORM ================= -->
+        <div id="section-signup-driver" class="hidden">
+          <form id="form-driver-signup" class="p-4 sm:p-6 space-y-4 text-xs">
+            
+            <!-- Already Registered Account Banner -->
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">&#128273;</span>
+                <div>
+                  <p class="font-bold text-emerald-950 text-xs">Already registered as a driver?</p>
+                  <p class="text-[11px] text-emerald-800">Switch to driver persona in the top navigation or log in.</p>
+                </div>
+              </div>
+              <button type="button" onclick="window.taraletsApp.switchToLoginFromSignup()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-extrabold rounded-lg text-xs transition shrink-0 flex items-center justify-center gap-1">
+                <span>Log In Here</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+
+            <!-- Step 1: Driver Personal & Contact -->
+            <div>
+              <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>&#128100;</span>
+                <span>1. Driver &amp; Contact Information</span>
+              </h4>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Full Name <span class="text-red-500">*</span></label>
+                  <input type="text" id="driver-signup-name" required placeholder="e.g. Engr. Christian Morales" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Mobile Phone Number <span class="text-red-500">*</span></label>
+                  <input type="tel" id="driver-signup-phone" required placeholder="e.g. 0917-555-8821" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                  <p class="text-[10px] text-slate-400 mt-0.5">Used for passenger updates and GCash fare payouts.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Workplace & Schedule -->
+            <div class="pt-2 border-t border-slate-100">
+              <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>&#127970;</span>
+                <span>2. Workplace Destination &amp; Schedule</span>
+              </h4>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Workplace Business Hub <span class="text-red-500">*</span></label>
+                  <select id="driver-signup-workplace-hub" required class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-emerald-500">
+                    <option value="hub-bgc">Bonifacio Global City (BGC) â€” Net Park / High Street</option>
+                    <option value="hub-makati">Makati CBD â€” Ayala Ave / PBCom Tower</option>
+                    <option value="hub-ortigas">Ortigas Center â€” Mega Tower / ADB Ave</option>
+                    <option value="hub-eastwood">Eastwood City Cyberpark â€” Cyber One</option>
+                    <option value="hub-alabang">Filinvest City Alabang â€” Northgate</option>
+                    <option value="hub-clark">Clark Global City â€” Berthaphil</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Company / Office Name <span class="text-red-500">*</span></label>
+                    <input type="text" id="driver-signup-company" required placeholder="e.g. Google PH / Accenture" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Work Email <span class="text-red-500">*</span></label>
+                    <input type="email" id="driver-signup-email" required placeholder="e.g. christian@company.ph" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Work Shift Schedule</label>
+                  <select id="driver-signup-schedule" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-emerald-500">
+                    <option value="08:00 AM - 05:00 PM">08:00 AM - 05:00 PM (Standard Day)</option>
+                    <option value="07:00 AM - 04:00 PM">07:00 AM - 04:00 PM (Early Shift)</option>
+                    <option value="08:30 AM - 05:30 PM">08:30 AM - 05:30 PM (Mid Shift)</option>
+                    <option value="09:00 AM - 06:00 PM">09:00 AM - 06:00 PM (Flexi Shift)</option>
+                    <option value="09:00 PM - 06:00 AM">09:00 PM - 06:00 AM (Night / BPO)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Vehicle Information -->
+            <div class="pt-2 border-t border-slate-100">
+              <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>&#128663;</span>
+                <span>3. Vehicle &amp; Seating Capacity</span>
+              </h4>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Vehicle Type</label>
+                  <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center gap-2 p-2.5 border border-slate-300 rounded-xl bg-white cursor-pointer hover:border-emerald-500">
+                      <input type="radio" name="driver-signup-vehicle-type" value="car" checked class="text-emerald-600 focus:ring-emerald-500">
+                      <span class="font-bold text-slate-800">&#128663; Car (Sedan/SUV/Van)</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 border border-slate-300 rounded-xl bg-white cursor-pointer hover:border-emerald-500">
+                      <input type="radio" name="driver-signup-vehicle-type" value="motorcycle" class="text-emerald-600 focus:ring-emerald-500">
+                      <span class="font-bold text-slate-800">&#127949; Motorcycle</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Model &amp; Color <span class="text-red-500">*</span></label>
+                    <input type="text" id="driver-signup-vehicle-model" required placeholder="e.g. Toyota Vios (Silver)" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Plate Number <span class="text-red-500">*</span></label>
+                    <input type="text" id="driver-signup-plate" required placeholder="e.g. NCA 4819" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium uppercase focus:ring-2 focus:ring-emerald-500">
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Seats to Share <span class="text-red-500">*</span></label>
+                    <select id="driver-signup-seats" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-emerald-500">
+                      <option value="3">3 Passengers (Standard Car)</option>
+                      <option value="4">4 Passengers (SUV / MPV)</option>
+                      <option value="2">2 Passengers (Compact)</option>
+                      <option value="1">1 Passenger (Motorcycle / Tandem)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4: Daily Route & Fare Share -->
+            <div class="pt-2 border-t border-slate-100">
+              <h4 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>&#128739;</span>
+                <span>4. Morning Route Corridor &amp; Payout</span>
+              </h4>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Morning Departure Area / Neighborhood <span class="text-red-500">*</span></label>
+                  <input type="text" id="driver-signup-origin" required placeholder="e.g. Fairview Terraces, Quezon City / Katipunan" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                  <p class="text-[10px] text-slate-400 mt-1">Colleagues living along this corridor will match with you.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Morning Departure Time</label>
+                    <input type="text" id="driver-signup-departure-time" value="06:45 AM" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Fare Contribution per Seat (&#8369;)</label>
+                    <input type="number" id="driver-signup-fare" value="130" min="50" max="500" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">GCash / Maya Mobile Number (for Fare Payouts)</label>
+                  <input type="tel" id="driver-signup-payout-phone" placeholder="e.g. 0917-555-8821 (Leave blank to use primary mobile)" class="w-full p-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Choose Driver Avatar</label>
+                  <div class="flex items-center gap-3 overflow-x-auto py-1">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="driver-signup-avatar" value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" checked class="peer sr-only">
+                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-emerald-600 peer-checked:ring-2 peer-checked:ring-emerald-400">
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="driver-signup-avatar" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
+                      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-emerald-600 peer-checked:ring-2 peer-checked:ring-emerald-400">
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="driver-signup-avatar" value="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
+                      <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-emerald-600 peer-checked:ring-2 peer-checked:ring-emerald-400">
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="driver-signup-avatar" value="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" class="peer sr-only">
+                      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200 peer-checked:border-emerald-600 peer-checked:ring-2 peer-checked:ring-emerald-400">
+                    </label>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Driver Submit Button -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <button type="button" data-close-modal="modal-passenger-signup" class="px-4 py-2 font-bold text-slate-500 hover:text-slate-700">
+                Cancel
+              </button>
+              <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white font-extrabold rounded-xl shadow-md transition flex items-center gap-1.5">
+                <span>&#128663; Complete Sign-Up &amp; Go Live as Driver</span>
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+
     </div>
   </div>
-
   <!-- ======================================================= -->
   <!-- MODAL 11: PASSENGER / COMMUTER LOG-IN MODAL (MOBILE OTP)  -->
   <!-- ======================================================= -->
@@ -1736,9 +1983,9 @@
 
           <!-- Switch to Sign Up -->
           <div class="pt-3 border-t border-slate-100 text-center">
-            <span class="text-slate-500 text-xs">Don't have a commuter profile yet? </span>
+            <span class="text-slate-500 text-xs">Don't have a TaraLets account yet? </span>
             <button type="button" onclick="window.taraletsApp.switchToSignupFromLogin()" class="font-extrabold text-blue-600 hover:text-blue-800 underline">
-              Sign Up as Commuter
+              Sign Up as Commuter or Driver
             </button>
           </div>
         </div>

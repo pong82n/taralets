@@ -386,6 +386,101 @@ class StorageService {
     return newPassenger;
   }
 
+  registerDriver(data) {
+    const id = "drv-" + Date.now();
+    const hubs = this.getWorkplaceHubs();
+    const hub = hubs.find(h => h.id === data.workplaceId) || hubs[0];
+    const hubLat = hub.lat || 14.5518;
+    const hubLng = hub.lng || 121.0494;
+
+    const vehicleType = data.vehicleType || "car";
+    const seatsCap = data.seatsCapacity ? parseInt(data.seatsCapacity, 10) : (vehicleType === 'motorcycle' ? 1 : 3);
+    const fare = data.farePerSeat ? parseInt(data.farePerSeat, 10) : (vehicleType === 'motorcycle' ? 90 : 130);
+
+    const newDriver = {
+      id,
+      name: data.name ? data.name.trim() : "Carpool Driver",
+      avatar: data.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      phone: data.phone ? data.phone.trim() : "0917-000-0000",
+      email: data.email ? data.email.trim() : `${(data.name || 'driver').toLowerCase().replace(/[^a-z0-9]/g, '.')}@${(data.company || 'workplace').toLowerCase().replace(/[^a-z0-9]/g, '')}.ph`,
+      workplaceId: data.workplaceId || hub.id,
+      company: data.company ? data.company.trim() : hub.name,
+      workplaceLocationName: hub.name,
+      workSchedule: data.workSchedule || "08:00 AM - 05:00 PM",
+      rating: 5.0,
+      totalCommutes: 0,
+      walletBalance: 0.00,
+      badge: "Verified Employee Driver",
+      paymentMethods: {
+        acceptedModes: ["gcash", "maya", "cash", "qrph", "wallet"],
+        gcashNumber: data.payoutPhone || data.phone || "0917-000-0000",
+        gcashName: data.name ? data.name.toUpperCase() : "DRIVER",
+        mayaAccount: data.payoutPhone || data.phone || "0917-000-0000",
+        bankName: "BDO Unibank (InstaPay)",
+        bankAccount: "Verified",
+        acceptsCash: true,
+        preferDigital: true
+      },
+      vehicle: {
+        type: vehicleType,
+        model: data.vehicleModel ? data.vehicleModel.trim() : (vehicleType === 'motorcycle' ? "Honda Click 150i" : "Toyota Vios 1.5G"),
+        plate: data.plate ? data.plate.trim().toUpperCase() : "NCA 1234",
+        seatsCapacity: seatsCap,
+        hasAircon: vehicleType !== 'motorcycle',
+        allowBaggage: true,
+        features: [vehicleType === 'motorcycle' ? "Helmet Provided" : "Aircon", "Dashcam", "No Smoking"]
+      },
+      defaultOrigin: {
+        name: data.originName ? data.originName.trim() : "Quezon City (Fairview / Commonwealth)",
+        lat: Number(hubLat) + 0.08,
+        lng: Number(hubLng) + 0.02
+      },
+      defaultFarePerSeat: fare
+    };
+
+    const drivers = this.getDrivers();
+    drivers.unshift(newDriver);
+    localStorage.setItem(STORAGE_KEYS.DRIVERS, JSON.stringify(drivers));
+
+    // Auto-create initial trip so commuters immediately see and match with this driver!
+    const trip = {
+      id: "trip-" + Date.now(),
+      driverId: newDriver.id,
+      driverName: newDriver.name,
+      driverAvatar: newDriver.avatar,
+      vehicleType: newDriver.vehicle.type,
+      vehicleModel: newDriver.vehicle.model,
+      plate: newDriver.vehicle.plate,
+      originName: newDriver.defaultOrigin.name,
+      originLat: newDriver.defaultOrigin.lat,
+      originLng: newDriver.defaultOrigin.lng,
+      destinationName: hub.name,
+      destinationLat: hubLat,
+      destinationLng: hubLng,
+      workplaceHubId: hub.id,
+      departureTime: data.departureTime || "07:00 AM",
+      totalSeats: newDriver.vehicle.seatsCapacity,
+      bookedSeats: 0,
+      bookedPassengerIds: [],
+      farePerSeat: newDriver.defaultFarePerSeat,
+      routeVia: data.routeVia || "Main Highway / Express Corridor",
+      notes: "Newly registered colleague driver ready for daily carpool.",
+      acceptedPaymentModes: ["gcash", "maya", "cash", "qrph", "wallet"],
+      status: "active"
+    };
+
+    const trips = this.getTrips();
+    trips.unshift(trip);
+    localStorage.setItem(STORAGE_KEYS.TRIPS, JSON.stringify(trips));
+
+    this.setCurrentDriverId(newDriver.id);
+    this.setActiveRole('driver');
+    this.setCommuterOnlyMode(false);
+
+    window.dispatchEvent(new CustomEvent('taralets:driver-registered', { detail: { driver: newDriver, trip } }));
+    return { driver: newDriver, trip };
+  }
+
   // --- Trips ---
   getTrips() {
     const raw = localStorage.getItem(STORAGE_KEYS.TRIPS);
