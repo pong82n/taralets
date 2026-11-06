@@ -1787,9 +1787,51 @@
     });
 
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      let isRefreshing = false;
+
+      // When new service worker activates and claims the client, auto-refresh to show latest updates
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!isRefreshing) {
+          isRefreshing = true;
+          console.log('⚡ TaraLets PWA auto-updated. Refreshing to load latest updates...');
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then((reg) => {
           console.log('TaraLets PWA active on mobile/tablet:', reg.scope);
+
+          // 1. Immediately check for server updates on app open
+          reg.update().catch(() => {});
+
+          // 2. Check for updates every time user returns to the mobile app
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              reg.update().catch(() => {});
+            }
+          });
+
+          // 3. Periodic background update check every 15 minutes
+          setInterval(() => {
+            reg.update().catch(() => {});
+          }, 15 * 60 * 1000);
+
+          // 4. Handle newly discovered updates
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // Tell user an update is being applied
+                if (window.taraletsApp && window.taraletsApp.showToast) {
+                  window.taraletsApp.showToast('⚡ New update available! Updating mobile app...', 'info');
+                }
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
         }).catch((err) => {
           console.warn('TaraLets PWA registration notice:', err);
         });

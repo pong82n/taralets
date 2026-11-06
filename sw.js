@@ -2,7 +2,7 @@
  * TaraLets Service Worker for Mobile & Tablet PWA Support
  */
 
-const CACHE_NAME = 'taralets-cache-v4';
+const CACHE_NAME = 'taralets-cache-v5';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -21,13 +21,21 @@ const ASSETS_TO_CACHE = [
   '/assets/qr/qr-passenger-app.png'
 ];
 
+// Instantly skip waiting when a message is received
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force the waiting service worker to become active
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
         console.warn('TaraLets PWA cache warm-up notice:', err);
       });
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
